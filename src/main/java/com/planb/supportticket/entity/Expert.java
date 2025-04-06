@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-@Table(name = "experts", 
+@Table(name = "experts",
        indexes = {
            @Index(name = "idx_expert_availability", columnList = "availability"),
            @Index(name = "idx_expert_rating", columnList = "average_rating")
@@ -67,4 +67,66 @@ public class Expert extends BaseEntity {
 
     @OneToMany(mappedBy = "expert")
     private List<Consultation> consultations = new ArrayList<>();
+
+    /**
+     * Gets the expert's rating.
+     *
+     * @return the expert's rating
+     */
+    public Double getRating() {
+        return averageRating;
+    }
+
+    /**
+     * Checks if the expert is available.
+     *
+     * @return true if the expert is available, false otherwise
+     */
+    public boolean isAvailable() {
+        return availability == ExpertAvailability.AVAILABLE;
+    }
+
+    @OneToMany(mappedBy = "expert", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ExpertAvailabilitySchedule> availabilitySchedule = new ArrayList<>();
+
+    @OneToMany(mappedBy = "expert", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChatSession> chatSessions = new ArrayList<>();
+
+    /**
+     * Adds a specialization to the expert.
+     *
+     * @param specialization the specialization to add
+     */
+    public void addSpecialization(ExpertSpecialization specialization) {
+        specializations.add(specialization);
+    }
+
+    /**
+     * Removes a specialization from the expert.
+     *
+     * @param specialization the specialization to remove
+     */
+    public void removeSpecialization(ExpertSpecialization specialization) {
+        specializations.remove(specialization);
+    }
+
+    /**
+     * Adds an availability schedule to the expert.
+     *
+     * @param schedule the availability schedule to add
+     */
+    public void addAvailabilitySchedule(ExpertAvailabilitySchedule schedule) {
+        availabilitySchedule.add(schedule);
+        schedule.setExpert(this);
+    }
+
+    /**
+     * Removes an availability schedule from the expert.
+     *
+     * @param schedule the availability schedule to remove
+     */
+    public void removeAvailabilitySchedule(ExpertAvailabilitySchedule schedule) {
+        availabilitySchedule.remove(schedule);
+        schedule.setExpert(null);
+    }
 }

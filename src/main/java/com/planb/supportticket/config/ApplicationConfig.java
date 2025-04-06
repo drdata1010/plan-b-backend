@@ -17,15 +17,17 @@ public class ApplicationConfig {
 
     @Bean
     @Profile("dev")
-    public void devEnvironmentSetup() {
+    public String devEnvironmentSetup() {
         log.info("Application is running in DEVELOPMENT mode");
         log.info("Database URL: {}", environment.getProperty("spring.datasource.url"));
+        return "devEnvironmentSetup";
     }
 
     @Bean
     @Profile("prod")
-    public void prodEnvironmentSetup() {
+    public String prodEnvironmentSetup() {
         log.info("Application is running in PRODUCTION mode");
         log.info("Active profiles: {}", String.join(", ", environment.getActiveProfiles()));
+        return "prodEnvironmentSetup";
     }
 }
