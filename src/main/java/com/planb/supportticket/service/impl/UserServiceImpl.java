@@ -10,6 +10,8 @@ import com.planb.supportticket.repository.UserProfileRepository;
 import com.planb.supportticket.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +29,12 @@ import java.util.*;
 public class UserServiceImpl implements UserService {
 
     private final UserProfileRepository userProfileRepository;
-    private final FirebaseAuth firebaseAuth;
+
+    @Autowired(required = false)
+    private FirebaseAuth firebaseAuth;
+
+    @Value("${firebase.enabled:false}")
+    private boolean firebaseEnabled;
 
     @Override
     public UserProfile createUserProfile(String firebaseUid, String email, String displayName) {
@@ -36,7 +43,7 @@ public class UserServiceImpl implements UserService {
         if (existingUser.isPresent()) {
             return existingUser.get();
         }
-        
+
         // Create new user profile
         UserProfile userProfile = new UserProfile();
         userProfile.setFirebaseUid(firebaseUid);
@@ -45,12 +52,12 @@ public class UserServiceImpl implements UserService {
         userProfile.setLastLogin(LocalDateTime.now());
         userProfile.setEmailVerified(false);
         userProfile.setAccountDisabled(false);
-        
+
         // Add default role
         Set<String> roles = new HashSet<>();
         roles.add("ROLE_USER");
         userProfile.setRoles(roles);
-        
+
         // Save and return
         return userProfileRepository.save(userProfile);
     }
@@ -76,7 +83,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserProfile updateUserProfile(UUID id, UserProfileDTO userProfileDTO) {
         UserProfile userProfile = getUserProfileById(id);
-        
+
         // Update fields
         if (userProfileDTO.getDisplayName() != null) {
             userProfile.setDisplayName(userProfileDTO.getDisplayName());
@@ -93,24 +100,26 @@ public class UserServiceImpl implements UserService {
         if (userProfileDTO.getBio() != null) {
             userProfile.setBio(userProfileDTO.getBio());
         }
-        
+
         // Update Firebase user if needed
-        try {
-            UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(userProfile.getFirebaseUid());
-            
-            if (userProfileDTO.getDisplayName() != null) {
-                request.setDisplayName(userProfileDTO.getDisplayName());
+        if (firebaseEnabled && firebaseAuth != null) {
+            try {
+                UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(userProfile.getFirebaseUid());
+
+                if (userProfileDTO.getDisplayName() != null) {
+                    request.setDisplayName(userProfileDTO.getDisplayName());
+                }
+                if (userProfileDTO.getPhoneNumber() != null) {
+                    request.setPhoneNumber(userProfileDTO.getPhoneNumber());
+                }
+
+                firebaseAuth.updateUser(request);
+            } catch (FirebaseAuthException e) {
+                log.error("Error updating Firebase user: {}", e.getMessage());
+                // Continue with local update even if Firebase update fails
             }
-            if (userProfileDTO.getPhoneNumber() != null) {
-                request.setPhoneNumber(userProfileDTO.getPhoneNumber());
-            }
-            
-            firebaseAuth.updateUser(request);
-        } catch (FirebaseAuthException e) {
-            log.error("Error updating Firebase user: {}", e.getMessage());
-            // Continue with local update even if Firebase update fails
         }
-        
+
         return userProfileRepository.save(userProfile);
     }
 
@@ -118,17 +127,19 @@ public class UserServiceImpl implements UserService {
     public UserProfile updateProfilePicture(UUID id, String profilePictureUrl) {
         UserProfile userProfile = getUserProfileById(id);
         userProfile.setProfilePictureUrl(profilePictureUrl);
-        
+
         // Update Firebase user
-        try {
-            UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(userProfile.getFirebaseUid())
-                    .setPhotoUrl(profilePictureUrl);
-            firebaseAuth.updateUser(request);
-        } catch (FirebaseAuthException e) {
-            log.error("Error updating Firebase user photo: {}", e.getMessage());
-            // Continue with local update even if Firebase update fails
+        if (firebaseEnabled && firebaseAuth != null) {
+            try {
+                UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(userProfile.getFirebaseUid())
+                        .setPhotoUrl(profilePictureUrl);
+                firebaseAuth.updateUser(request);
+            } catch (FirebaseAuthException e) {
+                log.error("Error updating Firebase user photo: {}", e.getMessage());
+                // Continue with local update even if Firebase update fails
+            }
         }
-        
+
         return userProfileRepository.save(userProfile);
     }
 
@@ -145,14 +156,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserProfile addRoleToUser(UUID id, String role) {
         UserProfile userProfile = getUserProfileById(id);
-        
+
         // Add role if not already present
         if (!role.startsWith("ROLE_")) {
             role = "ROLE_" + role;
         }
-        
+
         userProfile.addRole(role);
-        
+
         // Update Firebase custom claims
         try {
             updateFirebaseCustomClaims(userProfile);
@@ -160,21 +171,21 @@ public class UserServiceImpl implements UserService {
             log.error("Error updating Firebase custom claims: {}", e.getMessage());
             // Continue with local update even if Firebase update fails
         }
-        
+
         return userProfileRepository.save(userProfile);
     }
 
     @Override
     public UserProfile removeRoleFromUser(UUID id, String role) {
         UserProfile userProfile = getUserProfileById(id);
-        
+
         // Remove role if present
         if (!role.startsWith("ROLE_")) {
             role = "ROLE_" + role;
         }
-        
+
         userProfile.removeRole(role);
-        
+
         // Update Firebase custom claims
         try {
             updateFirebaseCustomClaims(userProfile);
@@ -182,7 +193,7 @@ public class UserServiceImpl implements UserService {
             log.error("Error updating Firebase custom claims: {}", e.getMessage());
             // Continue with local update even if Firebase update fails
         }
-        
+
         return userProfileRepository.save(userProfile);
     }
 
@@ -196,17 +207,19 @@ public class UserServiceImpl implements UserService {
     public UserProfile disableUserAccount(UUID id) {
         UserProfile userProfile = getUserProfileById(id);
         userProfile.setAccountDisabled(true);
-        
+
         // Disable Firebase user
-        try {
-            UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(userProfile.getFirebaseUid())
-                    .setDisabled(true);
-            firebaseAuth.updateUser(request);
-        } catch (FirebaseAuthException e) {
-            log.error("Error disabling Firebase user: {}", e.getMessage());
-            // Continue with local update even if Firebase update fails
+        if (firebaseEnabled && firebaseAuth != null) {
+            try {
+                UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(userProfile.getFirebaseUid())
+                        .setDisabled(true);
+                firebaseAuth.updateUser(request);
+            } catch (FirebaseAuthException e) {
+                log.error("Error disabling Firebase user: {}", e.getMessage());
+                // Continue with local update even if Firebase update fails
+            }
         }
-        
+
         return userProfileRepository.save(userProfile);
     }
 
@@ -214,17 +227,19 @@ public class UserServiceImpl implements UserService {
     public UserProfile enableUserAccount(UUID id) {
         UserProfile userProfile = getUserProfileById(id);
         userProfile.setAccountDisabled(false);
-        
+
         // Enable Firebase user
-        try {
-            UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(userProfile.getFirebaseUid())
-                    .setDisabled(false);
-            firebaseAuth.updateUser(request);
-        } catch (FirebaseAuthException e) {
-            log.error("Error enabling Firebase user: {}", e.getMessage());
-            // Continue with local update even if Firebase update fails
+        if (firebaseEnabled && firebaseAuth != null) {
+            try {
+                UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(userProfile.getFirebaseUid())
+                        .setDisabled(false);
+                firebaseAuth.updateUser(request);
+            } catch (FirebaseAuthException e) {
+                log.error("Error enabling Firebase user: {}", e.getMessage());
+                // Continue with local update even if Firebase update fails
+            }
         }
-        
+
         return userProfileRepository.save(userProfile);
     }
 
@@ -242,29 +257,31 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean hasRole(UUID id, String role) {
         UserProfile userProfile = getUserProfileById(id);
-        
+
         if (!role.startsWith("ROLE_")) {
             role = "ROLE_" + role;
         }
-        
+
         return userProfile.getRoles().contains(role);
     }
 
     @Override
     public void deleteUserProfile(UUID id) {
         UserProfile userProfile = getUserProfileById(id);
-        
+
         // Delete Firebase user
-        try {
-            firebaseAuth.deleteUser(userProfile.getFirebaseUid());
-        } catch (FirebaseAuthException e) {
-            log.error("Error deleting Firebase user: {}", e.getMessage());
-            // Continue with local deletion even if Firebase deletion fails
+        if (firebaseEnabled && firebaseAuth != null) {
+            try {
+                firebaseAuth.deleteUser(userProfile.getFirebaseUid());
+            } catch (FirebaseAuthException e) {
+                log.error("Error deleting Firebase user: {}", e.getMessage());
+                // Continue with local deletion even if Firebase deletion fails
+            }
         }
-        
+
         userProfileRepository.delete(userProfile);
     }
-    
+
     /**
      * Updates Firebase custom claims with user roles.
      *
@@ -272,6 +289,12 @@ public class UserServiceImpl implements UserService {
      * @throws FirebaseAuthException if an error occurs
      */
     private void updateFirebaseCustomClaims(UserProfile userProfile) throws FirebaseAuthException {
+        // Skip if Firebase is disabled or not available
+        if (!firebaseEnabled || firebaseAuth == null) {
+            log.debug("Skipping Firebase custom claims update - Firebase is disabled or not available");
+            return;
+        }
+
         // Convert roles to simple strings without ROLE_ prefix for Firebase
         List<String> firebaseRoles = new ArrayList<>();
         for (String role : userProfile.getRoles()) {
@@ -281,11 +304,11 @@ public class UserServiceImpl implements UserService {
                 firebaseRoles.add(role);
             }
         }
-        
+
         // Create claims map
         Map<String, Object> claims = new HashMap<>();
         claims.put("roles", firebaseRoles);
-        
+
         // Update Firebase custom claims
         firebaseAuth.setCustomUserClaims(userProfile.getFirebaseUid(), claims);
     }

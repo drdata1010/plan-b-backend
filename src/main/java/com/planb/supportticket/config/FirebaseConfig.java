@@ -4,6 +4,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import com.planb.supportticket.security.firebase.FirebaseTokenValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -96,5 +97,16 @@ public class FirebaseConfig {
             logger.warn("Error getting FirebaseAuth instance: {}", e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * Creates a FirebaseTokenValidator bean.
+     * This bean is always created, regardless of whether Firebase is enabled.
+     *
+     * @return the FirebaseTokenValidator instance
+     */
+    @Bean
+    public FirebaseTokenValidator firebaseTokenValidator() {
+        return new FirebaseTokenValidator();
     }
 }

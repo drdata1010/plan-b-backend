@@ -14,8 +14,8 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
  * Configuration for WebSocket messaging.
  * Enables WebSocket support and configures message broker.
  */
-@Configuration
-@EnableWebSocketMessageBroker
+// @Configuration
+// @EnableWebSocketMessageBroker
 public class ChatWebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Autowired(required = false)

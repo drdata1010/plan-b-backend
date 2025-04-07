@@ -44,7 +44,7 @@ public class ChatWebSocketController {
      * @param headerAccessor the message header accessor
      * @return the processed message
      */
-    @MessageMapping("/chat.sendMessage")
+    @MessageMapping("/chat.sendSessionMessage")
     public ChatMessageDTO sendMessage(
             @Payload ChatMessageDTO message,
             Principal principal,
@@ -121,10 +121,13 @@ public class ChatWebSocketController {
     /**
      * Gets available AI models.
      *
+     * Note: This method is disabled to avoid conflicts with AIChatWebSocketController.
+     * Use AIChatWebSocketController.getAvailableModels instead.
+     *
      * @return the list of available AI models
      */
-    @MessageMapping("/ai.models")
-    @SendToUser("/queue/ai.models")
+    // @MessageMapping("/ai.models") - Disabled to avoid conflicts
+    // @SendToUser("/queue/ai.models")
     public List<AIModelType> getAvailableAIModels() {
         return chatService.getAvailableAIModels();
     }

@@ -34,28 +34,28 @@ public class SecurityConfig {
 
     @Autowired
     private FirebaseTokenValidator firebaseTokenValidator;
-    
+
     @Value("${firebase.enabled:true}")
     private boolean firebaseEnabled;
-    
+
     @Value("${cors.allowed-origins}")
     private String[] allowedOrigins;
-    
+
     @Value("${cors.allowed-methods}")
     private String allowedMethods;
-    
+
     @Value("${cors.allowed-headers}")
     private String allowedHeaders;
-    
+
     @Value("${cors.exposed-headers}")
     private String exposedHeaders;
-    
+
     @Value("${cors.allow-credentials}")
     private boolean allowCredentials;
-    
+
     @Value("${cors.max-age}")
     private long maxAge;
-    
+
     /**
      * Configures the main HTTP security filter chain.
      *
@@ -69,33 +69,40 @@ public class SecurityConfig {
         http
             // Disable CSRF for REST API
             .csrf(AbstractHttpConfigurer::disable)
-            
+
             // Configure CORS
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            
+
             // Configure session management
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            
-            // Configure authorization rules
-            .authorizeHttpRequests(authorize -> authorize
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        // Configure authorization rules based on Firebase enabled status
+        if (firebaseEnabled) {
+            http.authorizeHttpRequests(authorize -> authorize
                 // Public endpoints
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/public/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                
+
                 // OPTIONS requests (for CORS preflight)
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                
+
                 // Role-based access
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/support/**").hasAnyRole("SUPPORT", "ADMIN")
-                
+
                 // Require authentication for all other requests
                 .anyRequest().authenticated()
             );
-        
+        } else {
+            // When Firebase is disabled, allow all requests for development/testing
+            http.authorizeHttpRequests(authorize -> authorize
+                .anyRequest().permitAll()
+            );
+        }
+
         // Add Firebase authentication filter if enabled
         if (firebaseEnabled) {
             http.addFilterBefore(
@@ -103,10 +110,10 @@ public class SecurityConfig {
                     UsernamePasswordAuthenticationFilter.class
             );
         }
-        
+
         return http.build();
     }
-    
+
     /**
      * Configures CORS for the application.
      *
@@ -115,31 +122,31 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
+
         // Set allowed origins
         configuration.setAllowedOrigins(Arrays.asList(allowedOrigins));
-        
+
         // Set allowed methods
         List<String> methods = Arrays.asList(allowedMethods.split(","));
         configuration.setAllowedMethods(methods);
-        
+
         // Set allowed headers
         List<String> headers = Arrays.asList(allowedHeaders.split(","));
         configuration.setAllowedHeaders(headers);
-        
+
         // Set exposed headers
         List<String> exposed = Arrays.asList(exposedHeaders.split(","));
         configuration.setExposedHeaders(exposed);
-        
+
         // Set allow credentials
         configuration.setAllowCredentials(allowCredentials);
-        
+
         // Set max age
         configuration.setMaxAge(maxAge);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
-        
+
         return source;
     }
 }

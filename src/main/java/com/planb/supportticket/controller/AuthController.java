@@ -10,8 +10,9 @@ import com.planb.supportticket.dto.UserProfileDTO;
 import com.planb.supportticket.entity.UserProfile;
 import com.planb.supportticket.service.UserService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,12 +27,20 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 @Slf4j
 public class AuthController {
 
     private final UserService userService;
-    private final FirebaseAuth firebaseAuth;
+
+    @Autowired(required = false)
+    private FirebaseAuth firebaseAuth;
+
+    @Value("${firebase.enabled:false}")
+    private boolean firebaseEnabled;
+
+    public AuthController(UserService userService) {
+        this.userService = userService;
+    }
 
     /**
      * Validates a Firebase token and returns user information.
@@ -41,11 +50,42 @@ public class AuthController {
      */
     @PostMapping("/validate-token")
     public ResponseEntity<AuthResponse> validateToken(@Valid @RequestBody AuthRequest request) {
+        // Check if Firebase is enabled
+        if (!firebaseEnabled || firebaseAuth == null) {
+            log.warn("Firebase is disabled, creating mock user for token");
+            // Create a mock user for development/testing
+            String mockUid = "mock-" + Math.abs(request.getToken().hashCode());
+            String mockEmail = mockUid + "@example.com";
+            String mockDisplayName = "Mock User";
+
+            // Get or create user profile
+            UserProfile userProfile;
+            try {
+                userProfile = userService.getUserProfileByFirebaseUid(mockUid);
+                // Update last login
+                userService.updateLastLogin(mockUid);
+            } catch (Exception e) {
+                // User doesn't exist, create a new profile
+                userProfile = userService.createUserProfile(mockUid, mockEmail, mockDisplayName);
+            }
+
+            // Create response
+            AuthResponse response = new AuthResponse();
+            response.setUid(mockUid);
+            response.setEmail(userProfile.getEmail());
+            response.setDisplayName(userProfile.getDisplayName());
+            response.setProfileId(userProfile.getId());
+            response.setRoles(userProfile.getRoles());
+            response.setEmailVerified(userProfile.isEmailVerified());
+
+            return ResponseEntity.ok(response);
+        }
+
         try {
             // Verify the Firebase token
             FirebaseToken decodedToken = firebaseAuth.verifyIdToken(request.getToken());
             String uid = decodedToken.getUid();
-            
+
             // Get or create user profile
             UserProfile userProfile;
             try {
@@ -59,10 +99,10 @@ public class AuthController {
                 if (displayName == null || displayName.isEmpty()) {
                     displayName = email.split("@")[0];
                 }
-                
+
                 userProfile = userService.createUserProfile(uid, email, displayName);
             }
-            
+
             // Create response
             AuthResponse response = new AuthResponse();
             response.setUid(uid);
@@ -71,7 +111,7 @@ public class AuthController {
             response.setProfileId(userProfile.getId());
             response.setRoles(userProfile.getRoles());
             response.setEmailVerified(userProfile.isEmailVerified());
-            
+
             return ResponseEntity.ok(response);
         } catch (FirebaseAuthException e) {
             log.error("Firebase token validation failed: {}", e.getMessage());
@@ -90,9 +130,9 @@ public class AuthController {
     public ResponseEntity<UserProfileDTO> assignRole(
             @PathVariable UUID userId,
             @RequestParam String role) {
-        
+
         UserProfile userProfile = userService.addRoleToUser(userId, role);
-        
+
         UserProfileDTO dto = convertToDTO(userProfile);
         return ResponseEntity.ok(dto);
     }
@@ -108,9 +148,9 @@ public class AuthController {
     public ResponseEntity<UserProfileDTO> removeRole(
             @PathVariable UUID userId,
             @RequestParam String role) {
-        
+
         UserProfile userProfile = userService.removeRoleFromUser(userId, role);
-        
+
         UserProfileDTO dto = convertToDTO(userProfile);
         return ResponseEntity.ok(dto);
     }
@@ -139,9 +179,9 @@ public class AuthController {
     public ResponseEntity<UserProfileDTO> updateProfile(
             @PathVariable UUID userId,
             @Valid @RequestBody UserProfileDTO profileDTO) {
-        
+
         UserProfile userProfile = userService.updateUserProfile(userId, profileDTO);
-        
+
         UserProfileDTO dto = convertToDTO(userProfile);
         return ResponseEntity.ok(dto);
     }
@@ -155,7 +195,7 @@ public class AuthController {
     @GetMapping("/profile/{userId}")
     public ResponseEntity<UserProfileDTO> getProfile(@PathVariable UUID userId) {
         UserProfile userProfile = userService.getUserProfileById(userId);
-        
+
         UserProfileDTO dto = convertToDTO(userProfile);
         return ResponseEntity.ok(dto);
     }
@@ -169,7 +209,7 @@ public class AuthController {
     @PostMapping("/disable/{userId}")
     public ResponseEntity<UserProfileDTO> disableAccount(@PathVariable UUID userId) {
         UserProfile userProfile = userService.disableUserAccount(userId);
-        
+
         UserProfileDTO dto = convertToDTO(userProfile);
         return ResponseEntity.ok(dto);
     }
@@ -183,7 +223,7 @@ public class AuthController {
     @PostMapping("/enable/{userId}")
     public ResponseEntity<UserProfileDTO> enableAccount(@PathVariable UUID userId) {
         UserProfile userProfile = userService.enableUserAccount(userId);
-        
+
         UserProfileDTO dto = convertToDTO(userProfile);
         return ResponseEntity.ok(dto);
     }

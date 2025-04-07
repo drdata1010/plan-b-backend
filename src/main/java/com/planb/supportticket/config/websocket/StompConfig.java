@@ -73,11 +73,11 @@ public class StompConfig {
      * Configures the client inbound channel.
      * This channel handles messages from clients to the server.
      *
-     * @param registration the ChannelRegistration to configure
      * @return the configured ChannelRegistration
      */
     @Bean
-    public ChannelRegistration configureClientInboundChannel(ChannelRegistration registration) {
+    public ChannelRegistration configureClientInboundChannel() {
+        ChannelRegistration registration = new ChannelRegistration();
         // Add authentication interceptor to validate user tokens
         registration.interceptors(stompAuthenticationInterceptor);
 
@@ -94,11 +94,11 @@ public class StompConfig {
      * Configures the client outbound channel.
      * This channel handles messages from the server to clients.
      *
-     * @param registration the ChannelRegistration to configure
      * @return the configured ChannelRegistration
      */
     @Bean
-    public ChannelRegistration configureClientOutboundChannel(ChannelRegistration registration) {
+    public ChannelRegistration configureClientOutboundChannel() {
+        ChannelRegistration registration = new ChannelRegistration();
         // Configure thread pool for sending messages to clients
         registration.taskExecutor()
                 .corePoolSize(4)

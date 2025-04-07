@@ -184,11 +184,27 @@ ai:
 
 # Firebase Configuration
 firebase:
-  enabled: ${FIREBASE_ENABLED:true}
+  enabled: ${FIREBASE_ENABLED:false}
   credentials:
     path: ${FIREBASE_CREDENTIALS_PATH:firebase-service-account.json}
   database:
     url: ${FIREBASE_DATABASE_URL:}
+
+# Springdoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+    filter: true
+  server:
+    url: ${SPRINGDOC_SERVER_URL:http://localhost:8080}
+  show-actuator: true
+  packages-to-scan: com.planb.supportticket.controller
+  paths-to-match: /api/**
 
 # Logging Configuration
 logging:
