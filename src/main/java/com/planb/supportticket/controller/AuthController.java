@@ -26,7 +26,7 @@ import java.util.UUID;
  * Handles Firebase token validation, role assignment, and profile management.
  */
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @Slf4j
 public class AuthController {
 

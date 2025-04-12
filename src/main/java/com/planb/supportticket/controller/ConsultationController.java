@@ -24,12 +24,12 @@ import java.util.stream.Collectors;
  * Handles consultation scheduling, management, and feedback.
  */
 @RestController
-@RequestMapping("/api/consultations")
+@RequestMapping("/consultations")
 @RequiredArgsConstructor
 @Slf4j
 public class ConsultationController {
     private final ExpertService expertService;
-    
+
     /**
      * Schedules a consultation with an expert.
      *
@@ -43,14 +43,14 @@ public class ConsultationController {
             @PathVariable UUID expertId,
             @Valid @RequestBody ConsultationDTO consultationDTO,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         UUID userId = getUserIdFromUserDetails(userDetails);
         Consultation consultation = expertService.scheduleConsultation(expertId, consultationDTO, userId);
-        
+
         ConsultationResponse response = convertToResponse(consultation);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-    
+
     /**
      * Gets a consultation by ID.
      *
@@ -60,11 +60,11 @@ public class ConsultationController {
     @GetMapping("/{id}")
     public ResponseEntity<ConsultationResponse> getConsultation(@PathVariable UUID id) {
         Consultation consultation = expertService.getConsultationById(id);
-        
+
         ConsultationResponse response = convertToResponse(consultation);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Updates a consultation.
      *
@@ -76,13 +76,13 @@ public class ConsultationController {
     public ResponseEntity<ConsultationResponse> updateConsultation(
             @PathVariable UUID id,
             @Valid @RequestBody ConsultationDTO consultationDTO) {
-        
+
         Consultation consultation = expertService.updateConsultation(id, consultationDTO);
-        
+
         ConsultationResponse response = convertToResponse(consultation);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Cancels a consultation.
      *
@@ -96,14 +96,14 @@ public class ConsultationController {
             @PathVariable UUID id,
             @RequestParam String reason,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         UUID userId = getUserIdFromUserDetails(userDetails);
         Consultation consultation = expertService.cancelConsultation(id, reason, userId);
-        
+
         ConsultationResponse response = convertToResponse(consultation);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Gets consultations for an expert with pagination.
      *
@@ -115,13 +115,13 @@ public class ConsultationController {
     public ResponseEntity<Page<ConsultationResponse>> getConsultationsByExpertId(
             @PathVariable UUID expertId,
             Pageable pageable) {
-        
+
         Page<Consultation> consultations = expertService.getConsultationsByExpertId(expertId, pageable);
-        
+
         Page<ConsultationResponse> response = consultations.map(this::convertToResponse);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Gets consultations for a user with pagination.
      *
@@ -133,13 +133,13 @@ public class ConsultationController {
     public ResponseEntity<Page<ConsultationResponse>> getConsultationsByUserId(
             @PathVariable UUID userId,
             Pageable pageable) {
-        
+
         Page<Consultation> consultations = expertService.getConsultationsByUserId(userId, pageable);
-        
+
         Page<ConsultationResponse> response = consultations.map(this::convertToResponse);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Gets upcoming consultations for an expert.
      *
@@ -149,16 +149,16 @@ public class ConsultationController {
     @GetMapping("/expert/{expertId}/upcoming")
     public ResponseEntity<List<ConsultationResponse>> getUpcomingConsultationsForExpert(
             @PathVariable UUID expertId) {
-        
+
         List<Consultation> consultations = expertService.getUpcomingConsultationsForExpert(expertId);
-        
+
         List<ConsultationResponse> response = consultations.stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
-        
+
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Gets upcoming consultations for a user.
      *
@@ -168,16 +168,16 @@ public class ConsultationController {
     @GetMapping("/user/{userId}/upcoming")
     public ResponseEntity<List<ConsultationResponse>> getUpcomingConsultationsForUser(
             @PathVariable UUID userId) {
-        
+
         List<Consultation> consultations = expertService.getUpcomingConsultationsForUser(userId);
-        
+
         List<ConsultationResponse> response = consultations.stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
-        
+
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Completes a consultation.
      *
@@ -189,13 +189,13 @@ public class ConsultationController {
     public ResponseEntity<ConsultationResponse> completeConsultation(
             @PathVariable UUID id,
             @RequestParam String notes) {
-        
+
         Consultation consultation = expertService.completeConsultation(id, notes);
-        
+
         ConsultationResponse response = convertToResponse(consultation);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Rates a consultation.
      *
@@ -211,14 +211,14 @@ public class ConsultationController {
             @RequestParam int rating,
             @RequestParam(required = false) String feedback,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         UUID userId = getUserIdFromUserDetails(userDetails);
         Consultation consultation = expertService.rateConsultation(id, rating, feedback, userId);
-        
+
         ConsultationResponse response = convertToResponse(consultation);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Converts a Consultation entity to a ConsultationResponse DTO.
      *
@@ -240,27 +240,27 @@ public class ConsultationController {
         response.setCancelledReason(consultation.getCancelledReason());
         response.setCancelledAt(consultation.getCancelledAt());
         response.setCancelledBy(consultation.getCancelledBy());
-        
+
         if (consultation.getUser() != null) {
             response.setUserId(consultation.getUser().getId());
             response.setUserName(consultation.getUser().getDisplayName());
         }
-        
+
         if (consultation.getExpert() != null) {
             response.setExpertId(consultation.getExpert().getId());
             if (consultation.getExpert().getUserProfile() != null) {
                 response.setExpertName(consultation.getExpert().getUserProfile().getDisplayName());
             }
         }
-        
+
         if (consultation.getTicket() != null) {
             response.setTicketId(consultation.getTicket().getId());
             response.setTicketTitle(consultation.getTicket().getTitle());
         }
-        
+
         return response;
     }
-    
+
     /**
      * Gets the user ID from the UserDetails.
      *

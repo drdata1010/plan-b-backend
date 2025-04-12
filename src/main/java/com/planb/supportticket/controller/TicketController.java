@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * Handles ticket CRUD operations, comments, and attachments.
  */
 @RestController
-@RequestMapping("/api/tickets")
+@RequestMapping("/tickets")
 @RequiredArgsConstructor
 @Slf4j
 public class TicketController {
@@ -50,7 +50,15 @@ public class TicketController {
             @Valid @RequestBody TicketDTO request,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        UUID userId = getUserIdFromUserDetails(userDetails);
+        UUID userId;
+        if (userDetails == null) {
+            // When Firebase is disabled, use a default user ID for testing
+            userId = UUID.fromString("0be5dcd3-05ba-499a-a069-5397114daf2c");
+            log.info("Firebase authentication is disabled. Using default user ID: {}", userId);
+        } else {
+            userId = getUserIdFromUserDetails(userDetails);
+        }
+
         Ticket ticket = ticketService.createTicket(request, userId);
 
         TicketResponse response = convertToResponse(ticket);
@@ -75,20 +83,20 @@ public class TicketController {
 
         if (filter != null) {
             if (filter.getUserId() != null) {
-                tickets = ticketService.getTicketsByUserId(filter.getUserId(), pageable);
+                tickets = ticketService.getTicketsByUserIdOrderByCreatedAtDesc(filter.getUserId(), pageable);
             } else if (filter.getExpertId() != null) {
-                tickets = ticketService.getTicketsByExpertId(filter.getExpertId(), pageable);
+                tickets = ticketService.getTicketsByExpertIdOrderByCreatedAtDesc(filter.getExpertId(), pageable);
             } else if (filter.getStatus() != null) {
-                tickets = ticketService.getTicketsByStatus(filter.getStatus(), pageable);
+                tickets = ticketService.getTicketsByStatusOrderByCreatedAtDesc(filter.getStatus(), pageable);
             } else if (filter.getPriority() != null) {
-                tickets = ticketService.getTicketsByPriority(filter.getPriority(), pageable);
+                tickets = ticketService.getTicketsByPriorityOrderByCreatedAtDesc(filter.getPriority(), pageable);
             } else if (filter.getKeyword() != null && !filter.getKeyword().isEmpty()) {
                 tickets = ticketService.searchTickets(filter.getKeyword(), pageable);
             } else {
-                tickets = ticketService.getAllTickets(pageable);
+                tickets = ticketService.getAllTicketsOrderByCreatedAtDesc(pageable);
             }
         } else {
-            tickets = ticketService.getAllTickets(pageable);
+            tickets = ticketService.getAllTicketsOrderByCreatedAtDesc(pageable);
         }
 
         Page<TicketResponse> response = tickets.map(this::convertToResponse);
@@ -104,6 +112,20 @@ public class TicketController {
     @GetMapping("/{id}")
     public ResponseEntity<TicketResponse> getTicket(@PathVariable UUID id) {
         Ticket ticket = ticketService.getTicketById(id);
+
+        TicketResponse response = convertToResponse(ticket);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Gets a ticket by ticket number.
+     *
+     * @param ticketNumber the ticket number (e.g., "TK-1")
+     * @return the ticket
+     */
+    @GetMapping("/number/{ticketNumber}")
+    public ResponseEntity<TicketResponse> getTicketByNumber(@PathVariable String ticketNumber) {
+        Ticket ticket = ticketService.getTicketByNumber(ticketNumber);
 
         TicketResponse response = convertToResponse(ticket);
         return ResponseEntity.ok(response);
@@ -351,11 +373,13 @@ public class TicketController {
     private TicketResponse convertToResponse(Ticket ticket) {
         TicketResponse response = new TicketResponse();
         response.setId(ticket.getId());
+        response.setTicketNumber(ticket.getTicketNumber());
         response.setTitle(ticket.getTitle());
         response.setDescription(ticket.getDescription());
         response.setStatus(ticket.getStatus());
         response.setPriority(ticket.getPriority());
-        response.setCategory(ticket.getCategory() != null ? ticket.getCategory().name() : null);
+        response.setClassification(ticket.getClassification());
+        response.setArea(ticket.getArea());
         response.setCreatedAt(ticket.getCreatedAt());
         response.setUpdatedAt(ticket.getUpdatedAt());
         response.setDueDate(ticket.getDueDate());
@@ -372,7 +396,7 @@ public class TicketController {
             response.setExpertName(ticket.getAssignedExpert().getUserProfile().getDisplayName());
         }
 
-        response.setCommentCount(ticket.getCommentCount());
+        response.setCommentCount(ticket.getCommentCount() != null ? ticket.getCommentCount() : 0);
 
         return response;
     }

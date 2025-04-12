@@ -10,6 +10,7 @@ import com.planb.supportticket.exception.ResourceNotFoundException;
 import com.planb.supportticket.exception.UnauthorizedException;
 import com.planb.supportticket.repository.*;
 import com.planb.supportticket.service.NotificationService;
+import com.planb.supportticket.service.TicketNumberService;
 import com.planb.supportticket.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +42,7 @@ public class TicketServiceImpl implements TicketService {
     private final AttachmentRepository attachmentRepository;
     private final S3Service s3Service;
     private final NotificationService notificationService;
+    private final TicketNumberService ticketNumberService;
 
     @Override
     public Ticket createTicket(TicketDTO ticketDTO, UUID userId) {
@@ -48,12 +50,13 @@ public class TicketServiceImpl implements TicketService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         Ticket ticket = new Ticket();
+        ticket.setTicketNumber(ticketNumberService.generateTicketNumber());
         ticket.setTitle(ticketDTO.getTitle());
         ticket.setDescription(ticketDTO.getDescription());
         ticket.setStatus(TicketStatus.OPEN);
         ticket.setPriority(ticketDTO.getPriority() != null ? ticketDTO.getPriority() : TicketPriority.MEDIUM);
-        ticket.setCategory(ticketDTO.getCategory() != null ?
-            com.planb.supportticket.entity.enums.TicketCategory.valueOf(ticketDTO.getCategory()) : null);
+        ticket.setClassification(ticketDTO.getClassification());
+        ticket.setArea(ticketDTO.getArea());
         ticket.setUser(user);
 
         if (ticketDTO.getDueDate() != null) {
@@ -75,6 +78,12 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
+    public Ticket getTicketByNumber(String ticketNumber) {
+        return ticketRepository.findByTicketNumber(ticketNumber)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with number: " + ticketNumber));
+    }
+
+    @Override
     public Ticket updateTicket(UUID id, TicketDTO ticketDTO) {
         Ticket ticket = getTicketById(id);
 
@@ -87,8 +96,11 @@ public class TicketServiceImpl implements TicketService {
         if (ticketDTO.getPriority() != null) {
             ticket.setPriority(ticketDTO.getPriority());
         }
-        if (ticketDTO.getCategory() != null) {
-            ticket.setCategory(com.planb.supportticket.entity.enums.TicketCategory.valueOf(ticketDTO.getCategory()));
+        if (ticketDTO.getClassification() != null) {
+            ticket.setClassification(ticketDTO.getClassification());
+        }
+        if (ticketDTO.getArea() != null) {
+            ticket.setArea(ticketDTO.getArea());
         }
         if (ticketDTO.getDueDate() != null) {
             ticket.setDueDate(ticketDTO.getDueDate());
@@ -125,8 +137,18 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
+    public Page<Ticket> getAllTicketsOrderByCreatedAtDesc(Pageable pageable) {
+        return ticketRepository.findAllByOrderByCreatedAtDesc(pageable);
+    }
+
+    @Override
     public Page<Ticket> getTicketsByUserId(UUID userId, Pageable pageable) {
         return ticketRepository.findByUserId(userId, pageable);
+    }
+
+    @Override
+    public Page<Ticket> getTicketsByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable) {
+        return ticketRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
     }
 
     @Override
@@ -135,13 +157,28 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
+    public Page<Ticket> getTicketsByExpertIdOrderByCreatedAtDesc(UUID expertId, Pageable pageable) {
+        return ticketRepository.findByAssignedExpertIdOrderByCreatedAtDesc(expertId, pageable);
+    }
+
+    @Override
     public Page<Ticket> getTicketsByStatus(TicketStatus status, Pageable pageable) {
         return ticketRepository.findByStatus(status, pageable);
     }
 
     @Override
+    public Page<Ticket> getTicketsByStatusOrderByCreatedAtDesc(TicketStatus status, Pageable pageable) {
+        return ticketRepository.findByStatusOrderByCreatedAtDesc(status, pageable);
+    }
+
+    @Override
     public Page<Ticket> getTicketsByPriority(TicketPriority priority, Pageable pageable) {
         return ticketRepository.findByPriority(priority, pageable);
+    }
+
+    @Override
+    public Page<Ticket> getTicketsByPriorityOrderByCreatedAtDesc(TicketPriority priority, Pageable pageable) {
+        return ticketRepository.findByPriorityOrderByCreatedAtDesc(priority, pageable);
     }
 
     @Override

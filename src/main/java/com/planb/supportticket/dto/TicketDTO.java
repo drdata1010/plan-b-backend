@@ -21,7 +21,8 @@ public class TicketDTO {
     private String title;
     private String description;
     private TicketPriority priority;
-    private String category;
+    private String classification;
+    private String area;
     private LocalDateTime dueDate;
     private UUID assignedExpertId;
 }

@@ -22,6 +22,6 @@ public class TicketFilter {
     private UUID expertId;
     private TicketStatus status;
     private TicketPriority priority;
-    private String category;
+    private String classification;
     private String keyword;
 }

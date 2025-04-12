@@ -20,11 +20,13 @@ import java.util.UUID;
 public class TicketResponse {
 
     private UUID id;
+    private String ticketNumber;
     private String title;
     private String description;
     private TicketStatus status;
     private TicketPriority priority;
-    private String category;
+    private String classification;
+    private String area;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime dueDate;

@@ -54,7 +54,7 @@ public class AdminController {
         stats.put("totalExperts", experts.size());
 
         // Ticket statistics
-        Page<Ticket> tickets = ticketService.getAllTickets(Pageable.unpaged());
+        Page<Ticket> tickets = ticketService.getAllTicketsOrderByCreatedAtDesc(Pageable.unpaged());
         stats.put("totalTickets", tickets.getTotalElements());
         stats.put("openTickets", tickets.stream().filter(t -> t.getStatus() == TicketStatus.OPEN).count());
         stats.put("resolvedTickets", tickets.stream().filter(t -> t.getStatus() == TicketStatus.RESOLVED).count());
@@ -84,7 +84,7 @@ public class AdminController {
      */
     @GetMapping("/tickets")
     public ResponseEntity<Page<TicketResponse>> getAllTickets(Pageable pageable) {
-        Page<Ticket> tickets = ticketService.getAllTickets(pageable);
+        Page<Ticket> tickets = ticketService.getAllTicketsOrderByCreatedAtDesc(pageable);
 
         Page<TicketResponse> response = tickets.map(this::convertToTicketResponse);
         return ResponseEntity.ok(response);
@@ -272,7 +272,8 @@ public class AdminController {
         response.setDescription(ticket.getDescription());
         response.setStatus(ticket.getStatus());
         response.setPriority(ticket.getPriority());
-        response.setCategory(ticket.getCategory() != null ? ticket.getCategory().name() : null);
+        response.setClassification(ticket.getClassification());
+        response.setArea(ticket.getArea());
         response.setCreatedAt(ticket.getCreatedAt());
         response.setUpdatedAt(ticket.getUpdatedAt());
         response.setDueDate(ticket.getDueDate());

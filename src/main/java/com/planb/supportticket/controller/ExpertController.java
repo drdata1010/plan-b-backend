@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * Handles expert profile management, availability, and specializations.
  */
 @RestController
-@RequestMapping("/api/experts")
+@RequestMapping("/experts")
 @RequiredArgsConstructor
 @Slf4j
 public class ExpertController {

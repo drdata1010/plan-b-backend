@@ -38,6 +38,14 @@ public interface TicketService {
     Ticket getTicketById(UUID id);
 
     /**
+     * Gets a ticket by its ticket number.
+     *
+     * @param ticketNumber the ticket number (e.g., "TK-1")
+     * @return the ticket
+     */
+    Ticket getTicketByNumber(String ticketNumber);
+
+    /**
      * Updates a ticket.
      *
      * @param id the ticket ID
@@ -62,6 +70,14 @@ public interface TicketService {
     Page<Ticket> getAllTickets(Pageable pageable);
 
     /**
+     * Gets all tickets ordered by creation date in descending order (newest first) with pagination.
+     *
+     * @param pageable the pagination information
+     * @return a page of tickets ordered by creation date in descending order
+     */
+    Page<Ticket> getAllTicketsOrderByCreatedAtDesc(Pageable pageable);
+
+    /**
      * Gets tickets by user ID with pagination.
      *
      * @param userId the user ID
@@ -69,6 +85,15 @@ public interface TicketService {
      * @return a page of tickets
      */
     Page<Ticket> getTicketsByUserId(UUID userId, Pageable pageable);
+
+    /**
+     * Gets tickets by user ID ordered by creation date in descending order (newest first) with pagination.
+     *
+     * @param userId the user ID
+     * @param pageable the pagination information
+     * @return a page of tickets ordered by creation date in descending order
+     */
+    Page<Ticket> getTicketsByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
     /**
      * Gets tickets by assigned expert ID with pagination.
@@ -80,6 +105,15 @@ public interface TicketService {
     Page<Ticket> getTicketsByExpertId(UUID expertId, Pageable pageable);
 
     /**
+     * Gets tickets by assigned expert ID ordered by creation date in descending order (newest first) with pagination.
+     *
+     * @param expertId the expert ID
+     * @param pageable the pagination information
+     * @return a page of tickets ordered by creation date in descending order
+     */
+    Page<Ticket> getTicketsByExpertIdOrderByCreatedAtDesc(UUID expertId, Pageable pageable);
+
+    /**
      * Gets tickets by status with pagination.
      *
      * @param status the ticket status
@@ -89,6 +123,15 @@ public interface TicketService {
     Page<Ticket> getTicketsByStatus(TicketStatus status, Pageable pageable);
 
     /**
+     * Gets tickets by status ordered by creation date in descending order (newest first) with pagination.
+     *
+     * @param status the ticket status
+     * @param pageable the pagination information
+     * @return a page of tickets ordered by creation date in descending order
+     */
+    Page<Ticket> getTicketsByStatusOrderByCreatedAtDesc(TicketStatus status, Pageable pageable);
+
+    /**
      * Gets tickets by priority with pagination.
      *
      * @param priority the ticket priority
@@ -96,6 +139,15 @@ public interface TicketService {
      * @return a page of tickets
      */
     Page<Ticket> getTicketsByPriority(TicketPriority priority, Pageable pageable);
+
+    /**
+     * Gets tickets by priority ordered by creation date in descending order (newest first) with pagination.
+     *
+     * @param priority the ticket priority
+     * @param pageable the pagination information
+     * @return a page of tickets ordered by creation date in descending order
+     */
+    Page<Ticket> getTicketsByPriorityOrderByCreatedAtDesc(TicketPriority priority, Pageable pageable);
 
     /**
      * Updates the status of a ticket.

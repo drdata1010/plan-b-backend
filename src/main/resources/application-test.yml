@@ -1,0 +1,21 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: jdbc:postgresql://localhost:5432/support_ticket_db
+    username: postgres
+    password: postgres
+  jpa:
+    show-sql: true
+
+# Disable Firebase authentication for testing
+firebase:
+  enabled: false
+
+# Development-specific logging
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.planb.supportticket: DEBUG

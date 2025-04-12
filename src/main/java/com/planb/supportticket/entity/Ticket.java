@@ -1,6 +1,5 @@
 package com.planb.supportticket.entity;
 
-import com.planb.supportticket.entity.enums.TicketCategory;
 import com.planb.supportticket.entity.enums.TicketPriority;
 import com.planb.supportticket.entity.enums.TicketStatus;
 import jakarta.persistence.*;
@@ -16,7 +15,7 @@ import java.util.List;
        indexes = {
            @Index(name = "idx_ticket_status", columnList = "status"),
            @Index(name = "idx_ticket_priority", columnList = "priority"),
-           @Index(name = "idx_ticket_category", columnList = "category"),
+           @Index(name = "idx_ticket_classification", columnList = "classification"),
            @Index(name = "idx_ticket_user", columnList = "user_id"),
            @Index(name = "idx_ticket_expert", columnList = "assigned_expert_id")
        })
@@ -26,6 +25,9 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class Ticket extends BaseEntity {
+
+    @Column(name = "ticket_number", unique = true)
+    private String ticketNumber;
 
     @Column(name = "title", nullable = false)
     private String title;
@@ -41,9 +43,11 @@ public class Ticket extends BaseEntity {
     @Column(name = "priority", nullable = false)
     private TicketPriority priority;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "category", nullable = false)
-    private TicketCategory category;
+    @Column(name = "classification", nullable = false)
+    private String classification;
+
+    @Column(name = "area")
+    private String area;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
