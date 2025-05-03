@@ -1,6 +1,6 @@
 package com.planb.supportticket.service.impl;
 
-import com.planb.supportticket.config.aws.S3Service;
+import com.planb.supportticket.config.gcp.GCSService;
 import com.planb.supportticket.dto.TicketDTO;
 import com.planb.supportticket.dto.TicketCommentDTO;
 import com.planb.supportticket.entity.*;
@@ -40,7 +40,7 @@ public class TicketServiceImpl implements TicketService {
     private final ExpertRepository expertRepository;
     private final TicketCommentRepository commentRepository;
     private final AttachmentRepository attachmentRepository;
-    private final S3Service s3Service;
+    private final GCSService gcsService;
     private final NotificationService notificationService;
     private final TicketNumberService ticketNumberService;
 
@@ -102,6 +102,43 @@ public class TicketServiceImpl implements TicketService {
         if (ticketDTO.getArea() != null) {
             ticket.setArea(ticketDTO.getArea());
         }
+        if (ticketDTO.getDetailedDescription() != null) {
+            ticket.setDetailedDescription(ticketDTO.getDetailedDescription());
+        }
+        if (ticketDTO.getDueDate() != null) {
+            ticket.setDueDate(ticketDTO.getDueDate());
+        }
+
+        Ticket updatedTicket = ticketRepository.save(ticket);
+
+        // Send notification
+        notificationService.sendTicketUpdatedNotification(updatedTicket);
+
+        return updatedTicket;
+    }
+
+    @Override
+    public Ticket updateTicketByNumber(String ticketNumber, TicketDTO ticketDTO) {
+        Ticket ticket = getTicketByNumber(ticketNumber);
+
+        if (ticketDTO.getTitle() != null) {
+            ticket.setTitle(ticketDTO.getTitle());
+        }
+        if (ticketDTO.getDescription() != null) {
+            ticket.setDescription(ticketDTO.getDescription());
+        }
+        if (ticketDTO.getPriority() != null) {
+            ticket.setPriority(ticketDTO.getPriority());
+        }
+        if (ticketDTO.getClassification() != null) {
+            ticket.setClassification(ticketDTO.getClassification());
+        }
+        if (ticketDTO.getArea() != null) {
+            ticket.setArea(ticketDTO.getArea());
+        }
+        if (ticketDTO.getDetailedDescription() != null) {
+            ticket.setDetailedDescription(ticketDTO.getDetailedDescription());
+        }
         if (ticketDTO.getDueDate() != null) {
             ticket.setDueDate(ticketDTO.getDueDate());
         }
@@ -118,12 +155,12 @@ public class TicketServiceImpl implements TicketService {
     public void deleteTicket(UUID id) {
         Ticket ticket = getTicketById(id);
 
-        // Delete attachments from S3
+        // Delete attachments from GCS
         for (Attachment attachment : ticket.getAttachments()) {
             try {
-                s3Service.deleteFile(attachment.getS3Key());
+                gcsService.deleteFile(attachment.getS3Key());
             } catch (Exception e) {
-                log.error("Error deleting attachment from S3: {}", e.getMessage());
+                log.error("Error deleting attachment from GCS: {}", e.getMessage());
                 // Continue with deletion even if S3 deletion fails
             }
         }
@@ -299,12 +336,12 @@ public class TicketServiceImpl implements TicketService {
     public void deleteComment(UUID commentId) {
         TicketComment comment = getCommentById(commentId);
 
-        // Delete attachments from S3
+        // Delete attachments from GCS
         for (Attachment attachment : comment.getAttachments()) {
             try {
-                s3Service.deleteFile(attachment.getS3Key());
+                gcsService.deleteFile(attachment.getS3Key());
             } catch (Exception e) {
-                log.error("Error deleting attachment from S3: {}", e.getMessage());
+                log.error("Error deleting attachment from GCS: {}", e.getMessage());
                 // Continue with deletion even if S3 deletion fails
             }
         }
@@ -343,8 +380,8 @@ public class TicketServiceImpl implements TicketService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         try {
-            // Upload file to S3
-            String s3Key = s3Service.uploadFile(file, "tickets/" + ticketId);
+            // Upload file to GCS
+            String s3Key = gcsService.uploadFile(file, "tickets/" + ticketId);
 
             // Create attachment
             Attachment attachment = new Attachment();
@@ -363,7 +400,7 @@ public class TicketServiceImpl implements TicketService {
 
             return savedAttachment;
         } catch (Exception e) {
-            log.error("Error uploading file to S3: {}", e.getMessage());
+            log.error("Error uploading file to GCS: {}", e.getMessage());
             throw new RuntimeException("Error uploading file", e);
         }
     }
@@ -384,11 +421,11 @@ public class TicketServiceImpl implements TicketService {
     public void deleteAttachment(UUID attachmentId) {
         Attachment attachment = getAttachmentById(attachmentId);
 
-        // Delete from S3
+        // Delete from GCS
         try {
-            s3Service.deleteFile(attachment.getS3Key());
+            gcsService.deleteFile(attachment.getS3Key());
         } catch (Exception e) {
-            log.error("Error deleting attachment from S3: {}", e.getMessage());
+            log.error("Error deleting attachment from GCS: {}", e.getMessage());
             // Continue with deletion even if S3 deletion fails
         }
 
@@ -402,8 +439,8 @@ public class TicketServiceImpl implements TicketService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         try {
-            // Upload file to S3
-            String s3Key = s3Service.uploadFile(file, "comments/" + commentId);
+            // Upload file to GCS
+            String s3Key = gcsService.uploadFile(file, "comments/" + commentId);
 
             // Create attachment
             Attachment attachment = new Attachment();
@@ -422,7 +459,7 @@ public class TicketServiceImpl implements TicketService {
 
             return savedAttachment;
         } catch (Exception e) {
-            log.error("Error uploading file to S3: {}", e.getMessage());
+            log.error("Error uploading file to GCS: {}", e.getMessage());
             throw new RuntimeException("Error uploading file", e);
         }
     }
@@ -507,6 +544,48 @@ public class TicketServiceImpl implements TicketService {
     public Page<Ticket> searchTickets(String keyword, Pageable pageable) {
         return ticketRepository.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
                 keyword, keyword, pageable);
+    }
+
+    @Override
+    public Ticket updateTicketWithAttachments(String ticketNumber, TicketDTO ticketData, List<MultipartFile> attachments, UUID userId) {
+        // First update the ticket data
+        Ticket ticket = updateTicketByNumber(ticketNumber, ticketData);
+
+        // Get the user
+        UserProfile user = userProfileRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        // Process attachments if any
+        if (attachments != null && !attachments.isEmpty()) {
+            for (MultipartFile file : attachments) {
+                if (file != null && !file.isEmpty()) {
+                    try {
+                        // Upload file to GCS
+                        String s3Key = gcsService.uploadFile(file, "tickets/" + ticket.getId());
+
+                        // Create attachment
+                        Attachment attachment = new Attachment();
+                        attachment.setFileName(file.getOriginalFilename());
+                        attachment.setFileSize(file.getSize());
+                        attachment.setContentType(file.getContentType());
+                        attachment.setS3Key(s3Key);
+                        attachment.setUser(user);
+                        attachment.setTicket(ticket);
+                        attachment.setPublic(true);
+
+                        Attachment savedAttachment = attachmentRepository.save(attachment);
+
+                        // Add attachment to ticket
+                        ticket.addAttachment(savedAttachment);
+                    } catch (Exception e) {
+                        log.error("Error uploading file to GCS: {}", e.getMessage());
+                        // Continue with other attachments even if one fails
+                    }
+                }
+            }
+        }
+
+        return ticket;
     }
 
     /**

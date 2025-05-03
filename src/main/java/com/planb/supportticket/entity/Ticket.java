@@ -49,6 +49,9 @@ public class Ticket extends BaseEntity {
     @Column(name = "area")
     private String area;
 
+    @Column(name = "detailed_description", columnDefinition = "TEXT")
+    private String detailedDescription;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private UserProfile user;

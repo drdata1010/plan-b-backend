@@ -249,7 +249,7 @@ public class AdminController {
         dto.setDisplayName(userProfile.getDisplayName());
         dto.setFirstName(userProfile.getFirstName());
         dto.setLastName(userProfile.getLastName());
-        dto.setPhoneNumber(userProfile.getPhoneNumber());
+        dto.setPhoneNumber(userProfile.getMobileNumber());
         dto.setProfilePictureUrl(userProfile.getProfilePictureUrl());
         dto.setBio(userProfile.getBio());
         dto.setLastLogin(userProfile.getLastLogin());

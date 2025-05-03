@@ -6,6 +6,10 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+/**
+ * Entity representing a consultation between a user and an expert.
+ * Consultations can be related to tickets and have various statuses.
+ */
 @Entity
 @Table(name = "consultations",
        indexes = {
@@ -71,32 +75,84 @@ public class Consultation extends BaseEntity {
     @Column(name = "cancelled_by")
     private String cancelledBy;
 
-    @OneToOne(mappedBy = "consultation", cascade = CascadeType.ALL, orphanRemoval = true)
-    private ChatSession chatSession;
-
     /**
-     * Creates a chat session for this consultation.
+     * Updates the status of this consultation.
      *
-     * @return the created chat session
+     * @param newStatus the new status
      */
-    public ChatSession createChatSession() {
-        if (this.chatSession != null) {
-            return this.chatSession;
+    public void updateStatus(ConsultationStatus newStatus) {
+        ConsultationStatus oldStatus = this.status;
+        this.status = newStatus;
+
+        // Set end time if completed
+        if (newStatus == ConsultationStatus.COMPLETED && this.endTime == null) {
+            this.endTime = LocalDateTime.now();
         }
 
-        ChatSession session = ChatSession.builder()
-                .user(this.user)
-                .expert(this.expert)
-                .ticket(this.ticket)
-                .title("Consultation Chat")
-                .startedAt(LocalDateTime.now())
-                .isActive(true)
-                .sessionType(ChatSession.ChatSessionType.CONSULTATION)
-                .build();
+        // Set cancelled info if cancelled
+        if (newStatus == ConsultationStatus.CANCELLED && this.cancelledAt == null) {
+            this.cancelledAt = LocalDateTime.now();
+        }
+    }
 
-        this.chatSession = session;
-        session.setConsultation(this);
+    /**
+     * Cancels this consultation.
+     *
+     * @param reason the cancellation reason
+     * @param cancelledBy the user who cancelled the consultation
+     */
+    public void cancel(String reason, String cancelledBy) {
+        this.status = ConsultationStatus.CANCELLED;
+        this.cancelledReason = reason;
+        this.cancelledAt = LocalDateTime.now();
+        this.cancelledBy = cancelledBy;
+    }
 
-        return session;
+    /**
+     * Marks this consultation as completed.
+     *
+     * @param expertNotes the expert's notes
+     */
+    public void complete(String expertNotes) {
+        this.status = ConsultationStatus.COMPLETED;
+        this.endTime = LocalDateTime.now();
+        this.expertNotes = expertNotes;
+    }
+
+    /**
+     * Marks this consultation as in progress.
+     */
+    public void startConsultation() {
+        this.status = ConsultationStatus.IN_PROGRESS;
+    }
+
+    /**
+     * Rates this consultation.
+     *
+     * @param rating the rating (1-5)
+     * @param feedback the user's feedback
+     */
+    public void rate(Integer rating, String feedback) {
+        this.userRating = rating;
+        this.userFeedback = feedback;
+    }
+
+    /**
+     * Gets the display name of the user.
+     *
+     * @return the user's display name
+     */
+    public String getUserDisplayName() {
+        return user != null ? user.getDisplayName() : null;
+    }
+
+    /**
+     * Gets the display name of the expert.
+     *
+     * @return the expert's display name
+     */
+    public String getExpertDisplayName() {
+        return expert != null && expert.getUserProfile() != null ? 
+               expert.getUserProfile().getDisplayName() : null;
     }
 }

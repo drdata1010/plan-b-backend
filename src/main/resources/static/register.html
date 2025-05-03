@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanBnext - Registration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background-color: #eee;
+            cursor: pointer;
+        }
+        .tab.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="tel"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .checkbox-group {
+            margin-top: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .error {
+            color: red;
+            margin-top: 5px;
+        }
+        .success {
+            color: green;
+            margin-top: 5px;
+        }
+        .hidden {
+            display: none;
+        }
+        .multi-select {
+            height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PlanBnext Registration</h1>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('user-tab')">User/Client</div>
+            <div class="tab" onclick="showTab('expert-tab')">Expert</div>
+        </div>
+        
+        <!-- User/Client Registration Form -->
+        <div id="user-tab" class="tab-content active">
+            <h2>User/Client Registration</h2>
+            <form id="user-form">
+                <div class="form-group">
+                    <label for="user-first-name">First Name *</label>
+                    <input type="text" id="user-first-name" name="firstName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="user-last-name">Last Name *</label>
+                    <input type="text" id="user-last-name" name="lastName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="user-email">Email Address *</label>
+                    <input type="email" id="user-email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="user-mobile">Mobile Number (with Country Code) *</label>
+                    <input type="tel" id="user-mobile" name="mobileNumber" placeholder="+1234567890" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="user-password">Password *</label>
+                    <input type="password" id="user-password" name="password" required>
+                    <small>Minimum 8 characters, must include letters, numbers, and one special character</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="user-confirm-password">Confirm Password *</label>
+                    <input type="password" id="user-confirm-password" name="confirmPassword" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="user-type">Customer Type *</label>
+                    <select id="user-type" name="customerType" onchange="toggleCompanyName()" required>
+                        <option value="User">User (Individual)</option>
+                        <option value="Client">Client (Business)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group hidden" id="company-name-group">
+                    <label for="company-name">Company Name *</label>
+                    <input type="text" id="company-name" name="companyName">
+                </div>
+                
+                <div class="form-group">
+                    <label for="user-country">Country *</label>
+                    <select id="user-country" name="country" required>
+                        <option value="">Select Country</option>
+                        <option value="US">United States</option>
+                        <option value="UK">United Kingdom</option>
+                        <option value="CA">Canada</option>
+                        <option value="AU">Australia</option>
+                        <option value="IN">India</option>
+                        <!-- Add more countries as needed -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="user-technologies">Preferred Technologies/Domain</label>
+                    <select id="user-technologies" name="preferredTechnologies" multiple class="multi-select">
+                        <option value="SAP">SAP</option>
+                        <option value="Salesforce">Salesforce</option>
+                        <option value="Oracle">Oracle</option>
+                        <option value="AWS">AWS</option>
+                        <option value="Azure">Azure</option>
+                        <option value="Python">Python</option>
+                        <option value=".Net">.Net</option>
+                        <option value="ServiceNow">ServiceNow</option>
+                        <!-- Add more technologies as needed -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="user-modules">Module/Component/Area</label>
+                    <select id="user-modules" name="preferredModules" multiple class="multi-select">
+                        <option value="SD">SD</option>
+                        <option value="FICO">FICO</option>
+                        <option value="HR">HR</option>
+                        <option value="ABAP">ABAP</option>
+                        <!-- Add more modules as needed -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="user-other-preferences">Other Preferences</label>
+                    <textarea id="user-other-preferences" name="otherPreferences" rows="3" placeholder="If your Technology/Domain or Module isn't listed above, please specify here"></textarea>
+                </div>
+                
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="user-terms" name="acceptTerms" required>
+                    <label for="user-terms">I accept the Terms & Conditions *</label>
+                </div>
+                
+                <button type="submit">Register</button>
+                
+                <div id="user-form-error" class="error hidden"></div>
+                <div id="user-form-success" class="success hidden"></div>
+            </form>
+        </div>
+        
+        <!-- Expert Registration Form -->
+        <div id="expert-tab" class="tab-content">
+            <h2>Expert Registration</h2>
+            <form id="expert-form">
+                <div class="form-group">
+                    <label for="expert-first-name">First Name *</label>
+                    <input type="text" id="expert-first-name" name="firstName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="expert-last-name">Last Name *</label>
+                    <input type="text" id="expert-last-name" name="lastName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="expert-email">Email Address *</label>
+                    <input type="email" id="expert-email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="expert-mobile">Mobile Number (with Country Code) *</label>
+                    <input type="tel" id="expert-mobile" name="mobileNumber" placeholder="+1234567890" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="expert-password">Password *</label>
+                    <input type="password" id="expert-password" name="password" required>
+                    <small>Minimum 8 characters, must include letters, numbers, and one special character</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="expert-confirm-password">Confirm Password *</label>
+                    <input type="password" id="expert-confirm-password" name="confirmPassword" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="expert-country">Country *</label>
+                    <select id="expert-country" name="country" required>
+                        <option value="">Select Country</option>
+                        <option value="US">United States</option>
+                        <option value="UK">United Kingdom</option>
+                        <option value="CA">Canada</option>
+                        <option value="AU">Australia</option>
+                        <option value="IN">India</option>
+                        <!-- Add more countries as needed -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="expert-technologies">Technologies/Domain *</label>
+                    <select id="expert-technologies" name="technologies" multiple class="multi-select" required>
+                        <option value="SAP">SAP</option>
+                        <option value="Salesforce">Salesforce</option>
+                        <option value="Oracle">Oracle</option>
+                        <option value="AWS">AWS</option>
+                        <option value="Azure">Azure</option>
+                        <option value="Python">Python</option>
+                        <option value=".Net">.Net</option>
+                        <option value="ServiceNow">ServiceNow</option>
+                        <!-- Add more technologies as needed -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="expert-modules">Module/Component/Area</label>
+                    <select id="expert-modules" name="modules" multiple class="multi-select">
+                        <option value="SD">SD</option>
+                        <option value="FICO">FICO</option>
+                        <option value="HR">HR</option>
+                        <option value="ABAP">ABAP</option>
+                        <!-- Add more modules as needed -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="expert-other-expertise">Other Expertise</label>
+                    <textarea id="expert-other-expertise" name="otherExpertise" rows="3" placeholder="If your Technology/Domain or Module isn't listed above, please specify here"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="expert-experience">Years of Experience *</label>
+                    <select id="expert-experience" name="yearsOfExperience" required>
+                        <option value="">Select Experience</option>
+                        <option value="0-1">0-1 years</option>
+                        <option value="2-4">2-4 years</option>
+                        <option value="5-8">5-8 years</option>
+                        <option value="9-12">9-12 years</option>
+                        <option value="12+">12+ years</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="expert-job-role">Job Role/Designation *</label>
+                    <input type="text" id="expert-job-role" name="jobRole" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="expert-response-time">Available to provide support within</label>
+                    <select id="expert-response-time" name="responseTime">
+                        <option value="">Select Response Time</option>
+                        <option value="Within 2 hours">Within 2 hours</option>
+                        <option value="Within 5 hours">Within 5 hours</option>
+                        <option value="Within 8 hours">Within 8 hours</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="expert-linkedin">LinkedIn Profile</label>
+                    <input type="url" id="expert-linkedin" name="linkedinProfile" placeholder="https://www.linkedin.com/in/yourprofile">
+                </div>
+                
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="expert-terms" name="acceptTerms" required>
+                    <label for="expert-terms">I accept the Terms & Conditions *</label>
+                </div>
+                
+                <button type="submit">Register</button>
+                
+                <div id="expert-form-error" class="error hidden"></div>
+                <div id="expert-form-success" class="success hidden"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Show/hide tabs
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabId).classList.add('active');
+            if (tabId === 'user-tab') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+            }
+        }
+        
+        // Toggle company name field based on customer type
+        function toggleCompanyName() {
+            const customerType = document.getElementById('user-type').value;
+            const companyNameGroup = document.getElementById('company-name-group');
+            
+            if (customerType === 'Client') {
+                companyNameGroup.classList.remove('hidden');
+                document.getElementById('company-name').setAttribute('required', 'required');
+            } else {
+                companyNameGroup.classList.add('hidden');
+                document.getElementById('company-name').removeAttribute('required');
+            }
+        }
+        
+        // Handle user form submission
+        document.getElementById('user-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const userData = {};
+            
+            formData.forEach((value, key) => {
+                if (key === 'preferredTechnologies' || key === 'preferredModules') {
+                    const select = document.getElementById('user-' + key);
+                    const selectedOptions = Array.from(select.selectedOptions).map(option => option.value);
+                    userData[key] = selectedOptions;
+                } else if (key === 'acceptTerms') {
+                    userData[key] = true;
+                } else {
+                    userData[key] = value;
+                }
+            });
+            
+            // Validate passwords match
+            if (userData.password !== userData.confirmPassword) {
+                document.getElementById('user-form-error').textContent = 'Passwords do not match';
+                document.getElementById('user-form-error').classList.remove('hidden');
+                return;
+            }
+            
+            // Validate company name for Client type
+            if (userData.customerType === 'Client' && !userData.companyName) {
+                document.getElementById('user-form-error').textContent = 'Company name is required for Client registration';
+                document.getElementById('user-form-error').classList.remove('hidden');
+                return;
+            }
+            
+            // Send registration request
+            fetch('/api/register/user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('user-form-success').textContent = data.message;
+                    document.getElementById('user-form-success').classList.remove('hidden');
+                    document.getElementById('user-form-error').classList.add('hidden');
+                    document.getElementById('user-form').reset();
+                } else {
+                    document.getElementById('user-form-error').textContent = data.message;
+                    document.getElementById('user-form-error').classList.remove('hidden');
+                    document.getElementById('user-form-success').classList.add('hidden');
+                }
+            })
+            .catch(error => {
+                document.getElementById('user-form-error').textContent = 'An error occurred. Please try again.';
+                document.getElementById('user-form-error').classList.remove('hidden');
+                document.getElementById('user-form-success').classList.add('hidden');
+                console.error('Error:', error);
+            });
+        });
+        
+        // Handle expert form submission
+        document.getElementById('expert-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const expertData = {};
+            
+            formData.forEach((value, key) => {
+                if (key === 'technologies' || key === 'modules') {
+                    const select = document.getElementById('expert-' + key);
+                    const selectedOptions = Array.from(select.selectedOptions).map(option => option.value);
+                    expertData[key] = selectedOptions;
+                } else if (key === 'acceptTerms') {
+                    expertData[key] = true;
+                } else {
+                    expertData[key] = value;
+                }
+            });
+            
+            // Validate passwords match
+            if (expertData.password !== expertData.confirmPassword) {
+                document.getElementById('expert-form-error').textContent = 'Passwords do not match';
+                document.getElementById('expert-form-error').classList.remove('hidden');
+                return;
+            }
+            
+            // Send registration request
+            fetch('/api/register/expert', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(expertData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('expert-form-success').textContent = data.message;
+                    document.getElementById('expert-form-success').classList.remove('hidden');
+                    document.getElementById('expert-form-error').classList.add('hidden');
+                    document.getElementById('expert-form').reset();
+                } else {
+                    document.getElementById('expert-form-error').textContent = data.message;
+                    document.getElementById('expert-form-error').classList.remove('hidden');
+                    document.getElementById('expert-form-success').classList.add('hidden');
+                }
+            })
+            .catch(error => {
+                document.getElementById('expert-form-error').textContent = 'An error occurred. Please try again.';
+                document.getElementById('expert-form-error').classList.remove('hidden');
+                document.getElementById('expert-form-success').classList.add('hidden');
+                console.error('Error:', error);
+            });
+        });
+        
+        // Initialize the form
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleCompanyName();
+        });
+    </script>
+</body>
+</html>

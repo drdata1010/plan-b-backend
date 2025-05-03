@@ -41,8 +41,8 @@ public class ChatSession extends BaseEntity {
     private Ticket ticket;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "consultation_id")
-    private Consultation consultation;
+    @JoinColumn(name = "expert_session_id")
+    private ExpertSession expertSession;
 
     @Column(name = "started_at", nullable = false)
     private LocalDateTime startedAt;
@@ -96,7 +96,7 @@ public class ChatSession extends BaseEntity {
         USER_EXPERT,
         USER_AI,
         TICKET_RELATED,
-        CONSULTATION,
+        EXPERT_SESSION,
         SUPPORT
     }
 }

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanBnext - Multi AI Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: #333;
+            color: white;
+            padding-top: 20px;
+        }
+        
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #444;
+        }
+        
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar-menu li {
+            padding: 15px 20px;
+            border-bottom: 1px solid #444;
+            cursor: pointer;
+        }
+        
+        .sidebar-menu li.active {
+            background-color: #4CAF50;
+        }
+        
+        .sidebar-menu li:hover:not(.active) {
+            background-color: #444;
+        }
+        
+        .sidebar-menu li i {
+            margin-right: 10px;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #4CAF50;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .input-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .input-container h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .input-area {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+        
+        .submit-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .submit-btn:hover {
+            background-color: #45a049;
+        }
+        
+        .results-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            flex: 1;
+        }
+        
+        .result-card {
+            flex: 1;
+            min-width: 300px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .result-header {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .result-header h3 {
+            margin: 0;
+            color: #333;
+        }
+        
+        .result-header button {
+            background-color: #f5f5f5;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .result-content {
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+        
+        .result-content pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+            font-family: inherit;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .cta-banner {
+            background-color: #f8f9fa;
+            border-left: 4px solid #4CAF50;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+        
+        .cta-banner p {
+            margin: 0 0 10px 0;
+            font-weight: bold;
+        }
+        
+        .cta-banner a {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .cta-banner a:hover {
+            background-color: #45a049;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                padding-top: 10px;
+            }
+            
+            .results-container {
+                flex-direction: column;
+            }
+            
+            .result-card {
+                min-width: 100%;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>PlanBnext</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <li><i class="fas fa-tachometer-alt"></i> Dashboard</li>
+            <li class="active"><i class="fas fa-robot"></i> Multi AI Tool</li>
+            <li><i class="fas fa-ticket-alt"></i> Ticket Management</li>
+            <li><i class="fas fa-user-tie"></i> Connect to Expert</li>
+            <li><i class="fas fa-cog"></i> Settings</li>
+            <li><i class="fas fa-sign-out-alt"></i> Logout</li>
+        </ul>
+    </div>
+    
+    <div class="main-content">
+        <div class="header">
+            <h1>Multi AI Tool</h1>
+            <div class="user-info">
+                <div class="user-avatar">JD</div>
+                <span>John Doe</span>
+            </div>
+        </div>
+        
+        <div class="input-container">
+            <h2>Enter your query</h2>
+            <textarea id="input-text" class="input-area" placeholder="Describe your issue or question here..."></textarea>
+            <button id="submit-btn" class="submit-btn">Submit</button>
+        </div>
+        
+        <div class="results-container">
+            <div class="result-card">
+                <div class="result-header">
+                    <h3>ChatGPT</h3>
+                    <button class="maximize-btn" data-ai="chatgpt">MAX</button>
+                </div>
+                <div id="chatgpt-result" class="result-content">
+                    <p>Submit a query to see results from ChatGPT.</p>
+                </div>
+            </div>
+            
+            <div class="result-card">
+                <div class="result-header">
+                    <h3>Deepseek</h3>
+                    <button class="maximize-btn" data-ai="deepseek">MAX</button>
+                </div>
+                <div id="deepseek-result" class="result-content">
+                    <p>Submit a query to see results from Deepseek.</p>
+                </div>
+            </div>
+            
+            <div class="result-card">
+                <div class="result-header">
+                    <h3>Cloudy</h3>
+                    <button class="maximize-btn" data-ai="cloudy">MAX</button>
+                </div>
+                <div id="cloudy-result" class="result-content">
+                    <p>Submit a query to see results from Cloudy.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="cta-banner">
+            <p>Not satisfied with the AI-generated results? No worries!</p>
+            <p>Take it to the next level with our Ticket Management Tool!</p>
+            <a href="create-ticket.html">Create a Ticket</a>
+        </div>
+    </div>
+    
+    <!-- Modal for maximized view -->
+    <div id="result-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">AI Result</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div id="modal-content" class="result-content">
+                <!-- Content will be inserted here -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputText = document.getElementById('input-text');
+            const submitBtn = document.getElementById('submit-btn');
+            const chatgptResult = document.getElementById('chatgpt-result');
+            const deepseekResult = document.getElementById('deepseek-result');
+            const cloudyResult = document.getElementById('cloudy-result');
+            const modal = document.getElementById('result-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+            const closeBtn = document.querySelector('.close-btn');
+            const maximizeBtns = document.querySelectorAll('.maximize-btn');
+            
+            // Handle form submission
+            submitBtn.addEventListener('click', function() {
+                const query = inputText.value.trim();
+                
+                if (!query) {
+                    alert('Please enter a query');
+                    return;
+                }
+                
+                // Show loading spinners
+                chatgptResult.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+                deepseekResult.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+                cloudyResult.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+                
+                // Call ChatGPT API
+                fetchChatGPTResponse(query)
+                    .then(response => {
+                        chatgptResult.innerHTML = '<pre>' + response + '</pre>';
+                    })
+                    .catch(error => {
+                        chatgptResult.innerHTML = '<p class="error">Error: ' + error.message + '</p>';
+                    });
+                
+                // Simulate Deepseek response (replace with actual API call)
+                setTimeout(() => {
+                    const response = simulateDeepseekResponse(query);
+                    deepseekResult.innerHTML = '<pre>' + response + '</pre>';
+                }, 2000);
+                
+                // Simulate Cloudy response (replace with actual API call)
+                setTimeout(() => {
+                    const response = simulateCloudyResponse(query);
+                    cloudyResult.innerHTML = '<pre>' + response + '</pre>';
+                }, 3000);
+            });
+            
+            // Handle maximize buttons
+            maximizeBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const ai = this.getAttribute('data-ai');
+                    let content = '';
+                    
+                    if (ai === 'chatgpt') {
+                        modalTitle.textContent = 'ChatGPT Result';
+                        content = chatgptResult.innerHTML;
+                    } else if (ai === 'deepseek') {
+                        modalTitle.textContent = 'Deepseek Result';
+                        content = deepseekResult.innerHTML;
+                    } else if (ai === 'cloudy') {
+                        modalTitle.textContent = 'Cloudy Result';
+                        content = cloudyResult.innerHTML;
+                    }
+                    
+                    modalContent.innerHTML = content;
+                    modal.style.display = 'block';
+                });
+            });
+            
+            // Close modal
+            closeBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+            
+            // Navigation
+            document.querySelectorAll('.sidebar-menu li').forEach(item => {
+                item.addEventListener('click', function() {
+                    const page = this.textContent.trim().toLowerCase().replace(/\s+/g, '-');
+                    
+                    if (page === 'dashboard') {
+                        window.location.href = 'user-dashboard.html';
+                    } else if (page === 'multi-ai-tool') {
+                        // Already on this page
+                    } else if (page === 'ticket-management') {
+                        window.location.href = 'ticket-management.html';
+                    } else if (page === 'connect-to-expert') {
+                        window.location.href = 'connect-to-expert.html';
+                    } else if (page === 'settings') {
+                        window.location.href = 'settings.html';
+                    } else if (page === 'logout') {
+                        window.location.href = 'login.html';
+                    }
+                });
+            });
+            
+            // Function to call ChatGPT API
+            async function fetchChatGPTResponse(query) {
+                try {
+                    const response = await fetch('/api/chatgpt/send', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ message: query })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch response from ChatGPT');
+                    }
+                    
+                    const data = await response.json();
+                    return data.response;
+                } catch (error) {
+                    console.error('Error calling ChatGPT API:', error);
+                    
+                    // For demo purposes, return a simulated response if API call fails
+                    return simulateChatGPTResponse(query);
+                }
+            }
+            
+            // Simulate ChatGPT response for demo purposes
+            function simulateChatGPTResponse(query) {
+                return `Based on your query: "${query}"\n\nHere's what I found:\n\nThis appears to be an issue with the configuration settings in your application. To resolve this:\n\n1. Check your environment variables\n2. Verify that your connection strings are correct\n3. Ensure that your authentication credentials are valid\n4. Restart the application after making changes\n\nIf the problem persists, you might need to check the server logs for more detailed error messages.`;
+            }
+            
+            // Simulate Deepseek response for demo purposes
+            function simulateDeepseekResponse(query) {
+                return `Query: "${query}"\n\nAnalysis:\n\nThe issue you're describing is likely related to a misconfiguration in your system. Here are some potential solutions:\n\n- Examine your application's configuration files for any syntax errors\n- Verify that all required services are running\n- Check for version compatibility issues between components\n- Look for recent changes that might have introduced the problem\n\nAdditional diagnostic steps:\n1. Enable verbose logging to capture more details\n2. Try reproducing the issue in a test environment\n3. Review any recent deployments or updates`;
+            }
+            
+            // Simulate Cloudy response for demo purposes
+            function simulateCloudyResponse(query) {
+                return `I've analyzed your query: "${query}"\n\nThis is a common issue that can be resolved with the following steps:\n\n1. First, clear your application cache\n2. Update all dependencies to their latest versions\n3. Check your network connectivity\n4. Verify that your API keys are still valid\n5. Ensure your firewall settings allow the necessary connections\n\nIf you're still experiencing issues after trying these solutions, consider checking for any recent changes in the API documentation or reaching out to the service provider's support team.`;
+            }
+        });
+    </script>
+</body>
+</html>

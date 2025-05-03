@@ -3,32 +3,43 @@ package com.planb.supportticket.controller;
 import com.planb.supportticket.dto.ConsultationDTO;
 import com.planb.supportticket.dto.ConsultationResponse;
 import com.planb.supportticket.entity.Consultation;
+import com.planb.supportticket.entity.Expert;
+import com.planb.supportticket.entity.Ticket;
+import com.planb.supportticket.entity.UserProfile;
+import com.planb.supportticket.entity.enums.ConsultationStatus;
+import com.planb.supportticket.service.ConsultationService;
 import com.planb.supportticket.service.ExpertService;
+import com.planb.supportticket.service.TicketService;
+import com.planb.supportticket.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
- * Controller for consultation operations.
- * Handles consultation scheduling, management, and feedback.
+ * REST controller for consultation management.
  */
 @RestController
-@RequestMapping("/consultations")
+@RequestMapping("/api/consultations")
 @RequiredArgsConstructor
 @Slf4j
 public class ConsultationController {
+
+    private final ConsultationService consultationService;
     private final ExpertService expertService;
+    private final UserService userService;
+    private final TicketService ticketService;
 
     /**
      * Schedules a consultation with an expert.
@@ -36,7 +47,7 @@ public class ConsultationController {
      * @param expertId the expert ID
      * @param consultationDTO the consultation data
      * @param userDetails the authenticated user
-     * @return the scheduled consultation
+     * @return the created consultation
      */
     @PostMapping("/expert/{expertId}")
     public ResponseEntity<ConsultationResponse> scheduleConsultation(
@@ -45,7 +56,8 @@ public class ConsultationController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         UUID userId = getUserIdFromUserDetails(userDetails);
-        Consultation consultation = expertService.scheduleConsultation(expertId, consultationDTO, userId);
+        Consultation consultation = consultationService.scheduleConsultation(
+                userId, expertId, consultationDTO);
 
         ConsultationResponse response = convertToResponse(consultation);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -59,7 +71,7 @@ public class ConsultationController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<ConsultationResponse> getConsultation(@PathVariable UUID id) {
-        Consultation consultation = expertService.getConsultationById(id);
+        Consultation consultation = consultationService.getConsultationById(id);
 
         ConsultationResponse response = convertToResponse(consultation);
         return ResponseEntity.ok(response);
@@ -77,7 +89,7 @@ public class ConsultationController {
             @PathVariable UUID id,
             @Valid @RequestBody ConsultationDTO consultationDTO) {
 
-        Consultation consultation = expertService.updateConsultation(id, consultationDTO);
+        Consultation consultation = consultationService.updateConsultation(id, consultationDTO);
 
         ConsultationResponse response = convertToResponse(consultation);
         return ResponseEntity.ok(response);
@@ -98,83 +110,23 @@ public class ConsultationController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         UUID userId = getUserIdFromUserDetails(userDetails);
-        Consultation consultation = expertService.cancelConsultation(id, reason, userId);
+        Consultation consultation = consultationService.cancelConsultation(id, reason, userId);
 
         ConsultationResponse response = convertToResponse(consultation);
         return ResponseEntity.ok(response);
     }
 
     /**
-     * Gets consultations for an expert with pagination.
+     * Starts a consultation.
      *
-     * @param expertId the expert ID
-     * @param pageable the pagination information
-     * @return a page of consultations
+     * @param id the consultation ID
+     * @return the started consultation
      */
-    @GetMapping("/expert/{expertId}")
-    public ResponseEntity<Page<ConsultationResponse>> getConsultationsByExpertId(
-            @PathVariable UUID expertId,
-            Pageable pageable) {
+    @PostMapping("/{id}/start")
+    public ResponseEntity<ConsultationResponse> startConsultation(@PathVariable UUID id) {
+        Consultation consultation = consultationService.startConsultation(id);
 
-        Page<Consultation> consultations = expertService.getConsultationsByExpertId(expertId, pageable);
-
-        Page<ConsultationResponse> response = consultations.map(this::convertToResponse);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * Gets consultations for a user with pagination.
-     *
-     * @param userId the user ID
-     * @param pageable the pagination information
-     * @return a page of consultations
-     */
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<Page<ConsultationResponse>> getConsultationsByUserId(
-            @PathVariable UUID userId,
-            Pageable pageable) {
-
-        Page<Consultation> consultations = expertService.getConsultationsByUserId(userId, pageable);
-
-        Page<ConsultationResponse> response = consultations.map(this::convertToResponse);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * Gets upcoming consultations for an expert.
-     *
-     * @param expertId the expert ID
-     * @return a list of upcoming consultations
-     */
-    @GetMapping("/expert/{expertId}/upcoming")
-    public ResponseEntity<List<ConsultationResponse>> getUpcomingConsultationsForExpert(
-            @PathVariable UUID expertId) {
-
-        List<Consultation> consultations = expertService.getUpcomingConsultationsForExpert(expertId);
-
-        List<ConsultationResponse> response = consultations.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * Gets upcoming consultations for a user.
-     *
-     * @param userId the user ID
-     * @return a list of upcoming consultations
-     */
-    @GetMapping("/user/{userId}/upcoming")
-    public ResponseEntity<List<ConsultationResponse>> getUpcomingConsultationsForUser(
-            @PathVariable UUID userId) {
-
-        List<Consultation> consultations = expertService.getUpcomingConsultationsForUser(userId);
-
-        List<ConsultationResponse> response = consultations.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
-
+        ConsultationResponse response = convertToResponse(consultation);
         return ResponseEntity.ok(response);
     }
 
@@ -190,7 +142,21 @@ public class ConsultationController {
             @PathVariable UUID id,
             @RequestParam String notes) {
 
-        Consultation consultation = expertService.completeConsultation(id, notes);
+        Consultation consultation = consultationService.completeConsultation(id, notes);
+
+        ConsultationResponse response = convertToResponse(consultation);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Marks a consultation as no-show.
+     *
+     * @param id the consultation ID
+     * @return the updated consultation
+     */
+    @PostMapping("/{id}/no-show")
+    public ResponseEntity<ConsultationResponse> markAsNoShow(@PathVariable UUID id) {
+        Consultation consultation = consultationService.markAsNoShow(id);
 
         ConsultationResponse response = convertToResponse(consultation);
         return ResponseEntity.ok(response);
@@ -213,9 +179,117 @@ public class ConsultationController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         UUID userId = getUserIdFromUserDetails(userDetails);
-        Consultation consultation = expertService.rateConsultation(id, rating, feedback, userId);
+        Consultation consultation = consultationService.rateConsultation(id, rating, feedback, userId);
 
         ConsultationResponse response = convertToResponse(consultation);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Gets consultations for an expert with pagination.
+     *
+     * @param expertId the expert ID
+     * @param pageable the pagination information
+     * @return a page of consultations
+     */
+    @GetMapping("/expert/{expertId}")
+    public ResponseEntity<Page<ConsultationResponse>> getConsultationsByExpertId(
+            @PathVariable UUID expertId,
+            Pageable pageable) {
+
+        Page<Consultation> consultations = consultationService.getConsultationsByExpertId(expertId, pageable);
+
+        Page<ConsultationResponse> response = consultations.map(this::convertToResponse);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Gets consultations for a user with pagination.
+     *
+     * @param userId the user ID
+     * @param pageable the pagination information
+     * @return a page of consultations
+     */
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<Page<ConsultationResponse>> getConsultationsByUserId(
+            @PathVariable UUID userId,
+            Pageable pageable) {
+
+        Page<Consultation> consultations = consultationService.getConsultationsByUserId(userId, pageable);
+
+        Page<ConsultationResponse> response = consultations.map(this::convertToResponse);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Gets upcoming consultations for an expert.
+     *
+     * @param expertId the expert ID
+     * @return a list of upcoming consultations
+     */
+    @GetMapping("/expert/{expertId}/upcoming")
+    public ResponseEntity<List<ConsultationResponse>> getUpcomingConsultationsForExpert(
+            @PathVariable UUID expertId) {
+
+        List<Consultation> consultations = consultationService.getUpcomingConsultationsForExpert(expertId);
+
+        List<ConsultationResponse> response = consultations.stream()
+                .map(this::convertToResponse)
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Gets upcoming consultations for a user.
+     *
+     * @param userId the user ID
+     * @return a list of upcoming consultations
+     */
+    @GetMapping("/user/{userId}/upcoming")
+    public ResponseEntity<List<ConsultationResponse>> getUpcomingConsultationsForUser(
+            @PathVariable UUID userId) {
+
+        List<Consultation> consultations = consultationService.getUpcomingConsultationsForUser(userId);
+
+        List<ConsultationResponse> response = consultations.stream()
+                .map(this::convertToResponse)
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Gets consultations by status with pagination.
+     *
+     * @param status the consultation status
+     * @param pageable the pagination information
+     * @return a page of consultations
+     */
+    @GetMapping("/status/{status}")
+    public ResponseEntity<Page<ConsultationResponse>> getConsultationsByStatus(
+            @PathVariable ConsultationStatus status,
+            Pageable pageable) {
+
+        Page<Consultation> consultations = consultationService.getConsultationsByStatus(status, pageable);
+
+        Page<ConsultationResponse> response = consultations.map(this::convertToResponse);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Gets consultations for a ticket with pagination.
+     *
+     * @param ticketId the ticket ID
+     * @param pageable the pagination information
+     * @return a page of consultations
+     */
+    @GetMapping("/ticket/{ticketId}")
+    public ResponseEntity<Page<ConsultationResponse>> getConsultationsByTicketId(
+            @PathVariable UUID ticketId,
+            Pageable pageable) {
+
+        Page<Consultation> consultations = consultationService.getConsultationsByTicketId(ticketId, pageable);
+
+        Page<ConsultationResponse> response = consultations.map(this::convertToResponse);
         return ResponseEntity.ok(response);
     }
 
@@ -243,14 +317,12 @@ public class ConsultationController {
 
         if (consultation.getUser() != null) {
             response.setUserId(consultation.getUser().getId());
-            response.setUserName(consultation.getUser().getDisplayName());
+            response.setUserName(consultation.getUserDisplayName());
         }
 
         if (consultation.getExpert() != null) {
             response.setExpertId(consultation.getExpert().getId());
-            if (consultation.getExpert().getUserProfile() != null) {
-                response.setExpertName(consultation.getExpert().getUserProfile().getDisplayName());
-            }
+            response.setExpertName(consultation.getExpertDisplayName());
         }
 
         if (consultation.getTicket() != null) {
@@ -264,12 +336,10 @@ public class ConsultationController {
     /**
      * Gets the user ID from the UserDetails.
      *
-     * @param userDetails the user details
+     * @param userDetails the authenticated user details
      * @return the user ID
      */
     private UUID getUserIdFromUserDetails(UserDetails userDetails) {
-        // In a real implementation, you would extract the user ID from the UserDetails
-        // This is a placeholder implementation
         return UUID.fromString(userDetails.getUsername());
     }
 }

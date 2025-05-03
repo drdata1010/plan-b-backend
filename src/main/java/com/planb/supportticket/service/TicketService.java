@@ -55,6 +55,15 @@ public interface TicketService {
     Ticket updateTicket(UUID id, TicketDTO ticketDTO);
 
     /**
+     * Updates a ticket by its ticket number.
+     *
+     * @param ticketNumber the ticket number (e.g., "TK-1")
+     * @param ticketDTO the updated ticket data
+     * @return the updated ticket
+     */
+    Ticket updateTicketByNumber(String ticketNumber, TicketDTO ticketDTO);
+
+    /**
      * Deletes a ticket.
      *
      * @param id the ticket ID
@@ -315,4 +324,15 @@ public interface TicketService {
      * @return a page of tickets
      */
     Page<Ticket> searchTickets(String keyword, Pageable pageable);
+
+    /**
+     * Updates a ticket by its ticket number with attachments.
+     *
+     * @param ticketNumber the ticket number (e.g., "TK-1")
+     * @param ticketData the ticket data as form fields
+     * @param attachments the files to attach to the ticket
+     * @param userId the ID of the user updating the ticket
+     * @return the updated ticket
+     */
+    Ticket updateTicketWithAttachments(String ticketNumber, TicketDTO ticketData, List<MultipartFile> attachments, UUID userId);
 }

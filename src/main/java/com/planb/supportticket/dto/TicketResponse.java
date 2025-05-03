@@ -27,6 +27,7 @@ public class TicketResponse {
     private TicketPriority priority;
     private String classification;
     private String area;
+    private String detailedDescription;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime dueDate;

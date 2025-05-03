@@ -94,8 +94,8 @@ public class UserServiceImpl implements UserService {
         if (userProfileDTO.getLastName() != null) {
             userProfile.setLastName(userProfileDTO.getLastName());
         }
-        if (userProfileDTO.getPhoneNumber() != null) {
-            userProfile.setPhoneNumber(userProfileDTO.getPhoneNumber());
+        if (userProfileDTO.getMobileNumber() != null) {
+            userProfile.setMobileNumber(userProfileDTO.getMobileNumber());
         }
         if (userProfileDTO.getBio() != null) {
             userProfile.setBio(userProfileDTO.getBio());
@@ -109,8 +109,8 @@ public class UserServiceImpl implements UserService {
                 if (userProfileDTO.getDisplayName() != null) {
                     request.setDisplayName(userProfileDTO.getDisplayName());
                 }
-                if (userProfileDTO.getPhoneNumber() != null) {
-                    request.setPhoneNumber(userProfileDTO.getPhoneNumber());
+                if (userProfileDTO.getMobileNumber() != null) {
+                    request.setPhoneNumber(userProfileDTO.getMobileNumber());
                 }
 
                 firebaseAuth.updateUser(request);

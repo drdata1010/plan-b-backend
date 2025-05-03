@@ -6,7 +6,7 @@ import com.planb.supportticket.entity.*;
 import com.planb.supportticket.entity.enums.TicketStatus;
 import com.planb.supportticket.enums.NotificationType;
 import com.planb.supportticket.service.NotificationService;
-import com.planb.supportticket.service.SESService;
+import com.planb.supportticket.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -19,14 +19,14 @@ import java.util.UUID;
 
 /**
  * Implementation of the NotificationService interface.
- * Handles email notifications via AWS SES, real-time notifications via WebSocket, and status updates.
+ * Handles email notifications via SMTP/Gmail, real-time notifications via WebSocket, and status updates.
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationServiceImpl implements NotificationService {
     private final SimpMessagingTemplate messagingTemplate;
-    private final SESService sesService;
+    private final EmailService emailService;
 
     // Simple implementation for now - we'll add the full implementation later
 
@@ -254,7 +254,7 @@ public class NotificationServiceImpl implements NotificationService {
     public void sendWelcomeEmail(UserProfile user) {
         // Simple implementation - to be expanded later
         try {
-            sesService.sendEmail(
+            emailService.sendEmail(
                 user.getEmail(),
                 "Welcome to Support Ticket System",
                 "Hello " + user.getDisplayName() + ",\n\n" +
@@ -271,7 +271,7 @@ public class NotificationServiceImpl implements NotificationService {
     public void sendPasswordResetEmail(UserProfile user, String resetToken) {
         // Simple implementation - to be expanded later
         try {
-            sesService.sendEmail(
+            emailService.sendEmail(
                 user.getEmail(),
                 "Password Reset Request",
                 "Hello " + user.getDisplayName() + ",\n\n" +
@@ -289,7 +289,7 @@ public class NotificationServiceImpl implements NotificationService {
     public void sendEmailVerificationEmail(UserProfile user, String verificationToken) {
         // Simple implementation - to be expanded later
         try {
-            sesService.sendEmail(
+            emailService.sendEmail(
                 user.getEmail(),
                 "Email Verification",
                 "Hello " + user.getDisplayName() + ",\n\n" +
@@ -318,7 +318,7 @@ public class NotificationServiceImpl implements NotificationService {
             summary.append("\nBest regards,\n");
             summary.append("Support Team");
 
-            sesService.sendEmail(
+            emailService.sendEmail(
                 user.getEmail(),
                 "Your Ticket Summary",
                 summary.toString()
@@ -341,7 +341,7 @@ public class NotificationServiceImpl implements NotificationService {
                 "Best regards,\n" +
                 "Support Team";
 
-            sesService.sendEmail(
+            emailService.sendEmail(
                 user.getEmail(),
                 "Consultation Confirmation",
                 message
@@ -365,7 +365,7 @@ public class NotificationServiceImpl implements NotificationService {
                 "Best regards,\n" +
                 "Support Team";
 
-            sesService.sendEmail(
+            emailService.sendEmail(
                 user.getEmail(),
                 "Consultation Reminder",
                 message

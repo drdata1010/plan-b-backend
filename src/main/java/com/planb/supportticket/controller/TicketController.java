@@ -150,6 +150,132 @@ public class TicketController {
     }
 
     /**
+     * Updates a ticket by ticket number.
+     *
+     * @param ticketNumber the ticket number (e.g., "TK-1")
+     * @param request the updated ticket data
+     * @return the updated ticket
+     */
+    @PutMapping(value = "/number/{ticketNumber}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<TicketResponse> updateTicketByNumber(
+            @PathVariable String ticketNumber,
+            @RequestBody TicketDTO request) {
+
+        Ticket ticket = ticketService.updateTicketByNumber(ticketNumber, request);
+
+        TicketResponse response = convertToResponse(ticket);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Updates a ticket by ticket number with multipart form data.
+     *
+     * @param ticketNumber the ticket number (e.g., "TK-1")
+     * @param title the ticket title
+     * @param description the ticket description
+     * @param priority the ticket priority
+     * @param classification the ticket classification
+     * @param area the ticket area
+     * @param detailedDescription the detailed description
+     * @param files the attachment files
+     * @param userDetails the authenticated user
+     * @return the updated ticket
+     */
+    @PutMapping(value = "/number/{ticketNumber}/form", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<TicketResponse> updateTicketByNumberWithForm(
+            @PathVariable String ticketNumber,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String priority,
+            @RequestParam(required = false) String classification,
+            @RequestParam(required = false) String area,
+            @RequestParam(required = false) String detailedDescription,
+            @RequestParam(required = false) MultipartFile[] files,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        TicketDTO ticketDTO = new TicketDTO();
+        ticketDTO.setTitle(title);
+        ticketDTO.setDescription(description);
+        if (priority != null && !priority.isEmpty()) {
+            try {
+                ticketDTO.setPriority(TicketPriority.valueOf(priority.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid priority: {}", priority);
+            }
+        }
+        ticketDTO.setClassification(classification);
+        ticketDTO.setArea(area);
+        ticketDTO.setDetailedDescription(detailedDescription);
+
+        Ticket ticket = ticketService.updateTicketByNumber(ticketNumber, ticketDTO);
+
+        // Add attachments if any
+        if (files != null && files.length > 0) {
+            UUID userId = getUserIdFromUserDetails(userDetails);
+            for (MultipartFile file : files) {
+                if (!file.isEmpty()) {
+                    try {
+                        ticketService.addAttachment(ticket.getId(), file, userId);
+                    } catch (Exception e) {
+                        log.error("Error adding attachment: {}", e.getMessage(), e);
+                    }
+                }
+            }
+            // Refresh the ticket to include the new attachments
+            ticket = ticketService.getTicketById(ticket.getId());
+        }
+
+        TicketResponse response = convertToResponse(ticket);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Updates a ticket by ticket number with multipart form data.
+     * This endpoint matches the URL pattern used by the React frontend.
+     *
+     * @param ticketNumber the ticket number (e.g., "TK-1")
+     * @param attachments the attachment files
+     * @param userDetails the authenticated user
+     * @return the updated ticket
+     */
+    @PutMapping(value = "/number/{ticketNumber}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<TicketResponse> updateTicketWithAttachments(
+            @PathVariable String ticketNumber,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String priority,
+            @RequestParam(required = false) String classification,
+            @RequestParam(required = false) String area,
+            @RequestParam(required = false) String detailedDescription,
+            @RequestParam(required = false) MultipartFile[] attachments,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        log.info("Updating ticket {} with attachments", ticketNumber);
+
+        TicketDTO ticketDTO = new TicketDTO();
+        ticketDTO.setTitle(title);
+        ticketDTO.setDescription(description);
+        if (priority != null && !priority.isEmpty()) {
+            try {
+                ticketDTO.setPriority(TicketPriority.valueOf(priority.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid priority: {}", priority);
+            }
+        }
+        ticketDTO.setClassification(classification);
+        ticketDTO.setArea(area);
+        ticketDTO.setDetailedDescription(detailedDescription);
+
+        UUID userId = getUserIdFromUserDetails(userDetails);
+        List<MultipartFile> attachmentList = attachments != null ? List.of(attachments) : List.of();
+
+        Ticket ticket = ticketService.updateTicketWithAttachments(ticketNumber, ticketDTO, attachmentList, userId);
+
+        TicketResponse response = convertToResponse(ticket);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Deletes a ticket.
      *
      * @param id the ticket ID
@@ -380,6 +506,7 @@ public class TicketController {
         response.setPriority(ticket.getPriority());
         response.setClassification(ticket.getClassification());
         response.setArea(ticket.getArea());
+        response.setDetailedDescription(ticket.getDetailedDescription());
         response.setCreatedAt(ticket.getCreatedAt());
         response.setUpdatedAt(ticket.getUpdatedAt());
         response.setDueDate(ticket.getDueDate());

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "experts",
@@ -28,14 +29,44 @@ public class Expert extends BaseEntity {
     @JoinColumn(name = "user_profile_id", nullable = false)
     private UserProfile userProfile;
 
-    @ElementCollection(targetClass = ExpertSpecialization.class)
+    @ElementCollection
     @CollectionTable(
-        name = "expert_specializations",
+        name = "expert_technologies",
         joinColumns = @JoinColumn(name = "expert_id")
     )
-    @Enumerated(EnumType.STRING)
-    @Column(name = "specialization")
-    private Set<ExpertSpecialization> specializations = new HashSet<>();
+    @Column(name = "technology")
+    private Set<String> technologies = new HashSet<>();
+
+    // For backward compatibility
+    public Set<ExpertSpecialization> getSpecializations() {
+        return technologies.stream()
+                .map(tech -> {
+                    try {
+                        return ExpertSpecialization.valueOf(tech);
+                    } catch (IllegalArgumentException e) {
+                        return null;
+                    }
+                })
+                .filter(spec -> spec != null)
+                .collect(Collectors.toSet());
+    }
+
+    public void setSpecializations(Set<ExpertSpecialization> specializations) {
+        this.technologies = specializations.stream()
+                .map(Enum::name)
+                .collect(Collectors.toSet());
+    }
+
+    @ElementCollection
+    @CollectionTable(
+        name = "expert_modules",
+        joinColumns = @JoinColumn(name = "expert_id")
+    )
+    @Column(name = "module")
+    private Set<String> modules = new HashSet<>();
+
+    @Column(name = "other_expertise", length = 500)
+    private String otherExpertise;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "availability", nullable = false)
@@ -45,7 +76,13 @@ public class Expert extends BaseEntity {
     private String bio;
 
     @Column(name = "years_of_experience")
-    private Integer yearsOfExperience;
+    private String yearsOfExperience; // 0-1, 2-4, 5-8, 9-12, 12+
+
+    @Column(name = "job_role")
+    private String jobRole;
+
+    @Column(name = "response_time")
+    private String responseTime; // Within 2 hours, Within 5 hours, Within 8 hours
 
     @Column(name = "average_rating")
     private Double averageRating;
@@ -55,6 +92,9 @@ public class Expert extends BaseEntity {
 
     @Column(name = "hourly_rate")
     private Double hourlyRate;
+
+    @Column(name = "linkedin_profile")
+    private String linkedinProfile;
 
     @Column(name = "available_from")
     private LocalDateTime availableFrom;
@@ -66,7 +106,7 @@ public class Expert extends BaseEntity {
     private List<Ticket> assignedTickets = new ArrayList<>();
 
     @OneToMany(mappedBy = "expert")
-    private List<Consultation> consultations = new ArrayList<>();
+    private List<ExpertSession> expertSessions = new ArrayList<>();
 
     /**
      * Gets the expert's rating.
@@ -93,21 +133,39 @@ public class Expert extends BaseEntity {
     private List<ChatSession> chatSessions = new ArrayList<>();
 
     /**
-     * Adds a specialization to the expert.
+     * Adds a technology to the expert.
      *
-     * @param specialization the specialization to add
+     * @param technology the technology to add
      */
-    public void addSpecialization(ExpertSpecialization specialization) {
-        specializations.add(specialization);
+    public void addTechnology(String technology) {
+        technologies.add(technology);
     }
 
     /**
-     * Removes a specialization from the expert.
+     * Removes a technology from the expert.
      *
-     * @param specialization the specialization to remove
+     * @param technology the technology to remove
      */
-    public void removeSpecialization(ExpertSpecialization specialization) {
-        specializations.remove(specialization);
+    public void removeTechnology(String technology) {
+        technologies.remove(technology);
+    }
+
+    /**
+     * Adds a module to the expert.
+     *
+     * @param module the module to add
+     */
+    public void addModule(String module) {
+        modules.add(module);
+    }
+
+    /**
+     * Removes a module from the expert.
+     *
+     * @param module the module to remove
+     */
+    public void removeModule(String module) {
+        modules.remove(module);
     }
 
     /**

@@ -1,0 +1,275 @@
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { notify } from "../../utils/notification";
+import "./CreateTicket.css"; // Reuse styles
+
+const EditTicket = () => {
+  const { ticket_number } = useParams();
+  const navigate = useNavigate();
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [formData, setFormData] = useState({
+    ticket_number: "",
+    title: "",
+    description: "",
+    priority: "",
+    itDomain: "", // This will map to classification
+    classification: "",
+    area: "",
+    detailedDescription: "",
+    attachments: [],
+  });
+
+  // Fetch existing ticket data
+  useEffect(() => {
+    const fetchTicket = async () => {
+      try {
+        console.log(`Fetching ticket data for ${ticket_number}`);
+        const { data } = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/tickets/number/${ticket_number}`
+        );
+        console.log("Ticket data received:", data);
+        
+        // Map backend fields to frontend fields
+        setFormData({
+          ticket_number: data.ticketNumber || "",
+          title: data.title || "",
+          description: data.description || "",
+          priority: data.priority ? data.priority.toLowerCase() : "",
+          itDomain: data.classification || "", // Map classification to itDomain
+          classification: data.classification || "",
+          area: data.area || "",
+          detailedDescription: data.detailedDescription || "",
+          attachments: [],
+        });
+      } catch (err) {
+        console.error("Error fetching ticket:", err);
+        setError("Failed to load ticket data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (ticket_number) fetchTicket();
+  }, [ticket_number]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+      // If itDomain changes, also update classification
+      ...(name === "itDomain" ? { classification: value } : {}),
+    }));
+  };
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    const oversized = files.filter((file) => file.size > 5 * 1024 * 1024);
+    if (oversized.length > 0) {
+      notify.error("Files must be under 5MB.");
+      return;
+    }
+    setFormData((prev) => ({ ...prev, attachments: files }));
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files);
+    handleFileChange({ target: { files } });
+  };
+
+  const handleDragOver = (e) => e.preventDefault();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const sendData = new FormData();
+      
+      // Map form fields to what the backend expects
+      sendData.append("title", formData.title);
+      sendData.append("description", formData.description);
+      sendData.append("priority", formData.priority.toUpperCase()); // Convert to uppercase for backend
+      sendData.append("classification", formData.classification || formData.itDomain);
+      sendData.append("area", formData.area);
+      sendData.append("detailedDescription", formData.detailedDescription);
+      
+      // Add attachments
+      formData.attachments.forEach((file) =>
+        sendData.append("attachments", file)
+      );
+
+      console.log("Submitting form data:", Object.fromEntries(sendData));
+
+      await axios.put(
+        `${import.meta.env.VITE_API_BASE_URL}/tickets/number/${ticket_number}`,
+        sendData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+
+      notify.success("Ticket updated successfully!");
+      navigate(`/tickets`);
+    } catch (err) {
+      console.error("Error updating ticket:", err);
+      const msg = err.response?.data?.message || "Failed to update ticket";
+      setError(msg);
+      notify.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fields = [
+    { label: "Title", name: "title", required: true },
+    { label: "Description", name: "description", required: true },
+    {
+      label: "Priority",
+      name: "priority",
+      type: "select",
+      options: ["low", "medium", "high"],
+      required: true,
+    },
+    {
+      label: "IT Domain",
+      name: "itDomain",
+      type: "select",
+      options: ["Hardware", "Software", "Network"],
+      required: true,
+    },
+    {
+      label: "Classification",
+      name: "classification",
+      type: "select",
+      options: ["Bug", "Feature", "Support"],
+      required: true,
+    },
+    {
+      label: "Area",
+      name: "area",
+      type: "select",
+      options: ["Frontend", "Backend", "Database"],
+      required: true,
+    },
+  ];
+
+  return (
+    <div className="create-ticket-container">
+      <header className="create-ticket-header">
+        <nav className="breadcrumb">
+          <span>Tickets</span> <span>/</span> <span>Edit</span>
+        </nav>
+        <h1>Edit Ticket #{ticket_number}</h1>
+        <p className="subtitle">Update the form below to modify your ticket.</p>
+      </header>
+
+      {loading ? (
+        <div className="loading-spinner">Loading...</div>
+      ) : (
+        <form onSubmit={handleSubmit} className="ticket-form">
+          <div className="form-grid">
+            {fields.map(({ label, name, required, type, options }) => (
+              <div className="form-group" key={name}>
+                <label htmlFor={name}>
+                  {label} {required && <span className="required">*</span>}
+                </label>
+                {type === "select" ? (
+                  <select
+                    id={name}
+                    name={name}
+                    value={formData[name]}
+                    onChange={handleChange}
+                    required={required}
+                  >
+                    <option value="">Select {label}</option>
+                    {options.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    id={name}
+                    name={name}
+                    value={formData[name]}
+                    onChange={handleChange}
+                    required={required}
+                  />
+                )}
+              </div>
+            ))}
+
+            <div className="form-group full-width">
+              <label htmlFor="detailedDescription">Detailed Description</label>
+              <textarea
+                id="detailedDescription"
+                name="detailedDescription"
+                value={formData.detailedDescription}
+                onChange={handleChange}
+                rows={4}
+              />
+            </div>
+
+            <div className="form-group full-width">
+              <label className="text-lg font-semibold mb-3">Attachments</label>
+              <div
+                className="file-upload-container flex gap-4 justify-evenly"
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+              >
+                {[1, 2, 3].map((box) => (
+                  <div
+                    key={box}
+                    className="file-upload-box p-6 w-64 h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-all"
+                  >
+                    <input
+                      type="file"
+                      multiple
+                      onChange={handleFileChange}
+                      className="hidden"
+                      id={`file-upload-${box}`}
+                      accept="image/*,.pdf,.txt"
+                    />
+                    <label
+                      htmlFor={`file-upload-${box}`}
+                      className="text-center cursor-pointer text-gray-500"
+                    >
+                      <div className="text-4xl mb-3">📎</div>
+                      <p className="text-sm">Drop or click to upload</p>
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
+                Max file size: 5MB per file
+              </p>
+            </div>
+          </div>
+
+          {error && <p className="error-message">{error}</p>}
+
+          <div className="form-actions">
+            <button
+              type="button"
+              className="cancel-button"
+              onClick={() => navigate("/tickets")}
+            >
+              Cancel
+            </button>
+            <button type="submit" className="save-button" disabled={loading}>
+              {loading ? "Updating..." : "Update Ticket"}
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+};
+
+export default EditTicket;

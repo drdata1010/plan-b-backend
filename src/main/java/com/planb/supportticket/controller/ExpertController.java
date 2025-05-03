@@ -296,52 +296,102 @@ public class ExpertController {
     }
 
     /**
-     * Adds a specialization to an expert.
+     * Adds a technology to an expert.
      *
      * @param id the expert ID
-     * @param specialization the specialization to add
+     * @param technology the technology to add
      * @return the updated expert profile
      */
-    @PostMapping("/{id}/specializations")
-    public ResponseEntity<ExpertResponse> addSpecialization(
+    @PostMapping("/{id}/technologies")
+    public ResponseEntity<ExpertResponse> addTechnology(
             @PathVariable UUID id,
-            @RequestParam String specialization) {
+            @RequestParam String technology) {
 
-        Expert expert = expertService.addSpecialization(id, specialization);
+        Expert expert = expertService.addTechnology(id, technology);
 
         ExpertResponse response = convertToResponse(expert);
         return ResponseEntity.ok(response);
     }
 
     /**
-     * Removes a specialization from an expert.
+     * Removes a technology from an expert.
      *
      * @param id the expert ID
-     * @param specialization the specialization to remove
+     * @param technology the technology to remove
      * @return the updated expert profile
      */
-    @DeleteMapping("/{id}/specializations")
-    public ResponseEntity<ExpertResponse> removeSpecialization(
+    @DeleteMapping("/{id}/technologies")
+    public ResponseEntity<ExpertResponse> removeTechnology(
             @PathVariable UUID id,
-            @RequestParam String specialization) {
+            @RequestParam String technology) {
 
-        Expert expert = expertService.removeSpecialization(id, specialization);
+        Expert expert = expertService.removeTechnology(id, technology);
 
         ExpertResponse response = convertToResponse(expert);
         return ResponseEntity.ok(response);
     }
 
     /**
-     * Gets specializations for an expert.
+     * Gets technologies for an expert.
      *
      * @param id the expert ID
-     * @return a set of specializations
+     * @return a set of technologies
      */
-    @GetMapping("/{id}/specializations")
-    public ResponseEntity<Set<String>> getSpecializations(@PathVariable UUID id) {
-        Set<String> specializations = expertService.getSpecializations(id);
-        return ResponseEntity.ok(specializations);
+    @GetMapping("/{id}/technologies")
+    public ResponseEntity<Set<String>> getTechnologies(@PathVariable UUID id) {
+        Set<String> technologies = expertService.getTechnologies(id);
+        return ResponseEntity.ok(technologies);
     }
+
+    /**
+     * Adds a module to an expert.
+     *
+     * @param id the expert ID
+     * @param module the module to add
+     * @return the updated expert profile
+     */
+    @PostMapping("/{id}/modules")
+    public ResponseEntity<ExpertResponse> addModule(
+            @PathVariable UUID id,
+            @RequestParam String module) {
+
+        Expert expert = expertService.addModule(id, module);
+
+        ExpertResponse response = convertToResponse(expert);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Removes a module from an expert.
+     *
+     * @param id the expert ID
+     * @param module the module to remove
+     * @return the updated expert profile
+     */
+    @DeleteMapping("/{id}/modules")
+    public ResponseEntity<ExpertResponse> removeModule(
+            @PathVariable UUID id,
+            @RequestParam String module) {
+
+        Expert expert = expertService.removeModule(id, module);
+
+        ExpertResponse response = convertToResponse(expert);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Gets modules for an expert.
+     *
+     * @param id the expert ID
+     * @return a set of modules
+     */
+    @GetMapping("/{id}/modules")
+    public ResponseEntity<Set<String>> getModules(@PathVariable UUID id) {
+        Set<String> modules = expertService.getModules(id);
+        return ResponseEntity.ok(modules);
+    }
+
+
 
     /**
      * Gets the average rating for an expert.

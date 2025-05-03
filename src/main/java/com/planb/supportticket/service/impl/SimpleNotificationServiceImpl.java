@@ -2,7 +2,7 @@ package com.planb.supportticket.service.impl;
 
 import com.planb.supportticket.dto.NotificationDTO;
 import com.planb.supportticket.enums.NotificationType;
-import com.planb.supportticket.service.SESService;
+import com.planb.supportticket.service.EmailService;
 import com.planb.supportticket.service.SimpleNotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,14 +14,14 @@ import java.util.UUID;
 
 /**
  * Implementation of the SimpleNotificationService interface.
- * Handles email notifications via AWS SES, real-time notifications via WebSocket, and status updates.
+ * Handles email notifications via SMTP/Gmail, real-time notifications via WebSocket, and status updates.
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class SimpleNotificationServiceImpl implements SimpleNotificationService {
     private final SimpMessagingTemplate messagingTemplate;
-    private final SESService sesService;
+    private final EmailService emailService;
 
     @Override
     public void sendNotification(NotificationDTO notification) {
@@ -106,7 +106,7 @@ public class SimpleNotificationServiceImpl implements SimpleNotificationService 
      */
     private void sendEmailNotification(NotificationDTO notification) {
         try {
-            sesService.sendEmail(
+            emailService.sendEmail(
                 notification.getEmail(),
                 "New Notification",
                 buildEmailContent(notification)

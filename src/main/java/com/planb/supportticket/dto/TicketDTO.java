@@ -23,6 +23,7 @@ public class TicketDTO {
     private TicketPriority priority;
     private String classification;
     private String area;
+    private String detailedDescription;
     private LocalDateTime dueDate;
     private UUID assignedExpertId;
 }

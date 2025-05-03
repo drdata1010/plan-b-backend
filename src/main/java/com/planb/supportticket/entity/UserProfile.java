@@ -39,8 +39,17 @@ public class UserProfile extends BaseEntity {
     @Column(name = "last_name")
     private String lastName;
 
-    @Column(name = "phone_number")
-    private String phoneNumber;
+    @Column(name = "mobile_number")
+    private String mobileNumber;
+
+    @Column(name = "country")
+    private String country;
+
+    @Column(name = "company_name")
+    private String companyName;
+
+    @Column(name = "customer_type")
+    private String customerType; // User or Client
 
     @Column(name = "profile_picture_url")
     private String profilePictureUrl;
@@ -48,14 +57,59 @@ public class UserProfile extends BaseEntity {
     @Column(name = "bio", length = 1000)
     private String bio;
 
+    @ElementCollection
+    @CollectionTable(
+        name = "user_preferred_technologies",
+        joinColumns = @JoinColumn(name = "user_id")
+    )
+    @Column(name = "technology")
+    private Set<String> preferredTechnologies = new HashSet<>();
+
+    @ElementCollection
+    @CollectionTable(
+        name = "user_preferred_modules",
+        joinColumns = @JoinColumn(name = "user_id")
+    )
+    @Column(name = "module")
+    private Set<String> preferredModules = new HashSet<>();
+
+    @Column(name = "other_preferences", length = 500)
+    private String otherPreferences;
+
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
     @Column(name = "is_email_verified")
     private boolean isEmailVerified;
 
+    // For backward compatibility
+    public Boolean getEmailVerified() {
+        return isEmailVerified;
+    }
+
+    public void setEmailVerified(Boolean emailVerified) {
+        this.isEmailVerified = emailVerified;
+    }
+
+    public boolean isEmailVerified() {
+        return isEmailVerified;
+    }
+
     @Column(name = "is_account_disabled")
     private boolean isAccountDisabled;
+
+    // For backward compatibility
+    public Boolean getAccountDisabled() {
+        return isAccountDisabled;
+    }
+
+    public void setAccountDisabled(Boolean accountDisabled) {
+        this.isAccountDisabled = accountDisabled;
+    }
+
+    public boolean isAccountDisabled() {
+        return isAccountDisabled;
+    }
 
     @ElementCollection
     @CollectionTable(
@@ -75,7 +129,7 @@ public class UserProfile extends BaseEntity {
     private List<TicketComment> comments = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Consultation> consultations = new ArrayList<>();
+    private List<ExpertSession> expertSessions = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatSession> chatSessions = new ArrayList<>();

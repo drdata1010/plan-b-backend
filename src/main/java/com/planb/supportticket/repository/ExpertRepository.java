@@ -15,7 +15,7 @@ import java.util.UUID;
  */
 @Repository
 public interface ExpertRepository extends JpaRepository<Expert, UUID> {
-    
+
     /**
      * Finds an expert by user profile ID.
      *
@@ -23,7 +23,7 @@ public interface ExpertRepository extends JpaRepository<Expert, UUID> {
      * @return the expert, if found
      */
     Optional<Expert> findByUserProfileId(UUID userProfileId);
-    
+
     /**
      * Finds available experts with pagination.
      *
@@ -31,27 +31,27 @@ public interface ExpertRepository extends JpaRepository<Expert, UUID> {
      * @return a page of available experts
      */
     Page<Expert> findByAvailableTrue(Pageable pageable);
-    
+
     /**
-     * Finds experts by specialization with pagination.
+     * Finds experts by technology with pagination.
      *
-     * @param specialization the specialization
+     * @param technology the technology
      * @param pageable the pagination information
      * @return a page of experts
      */
-    @Query("SELECT e FROM Expert e JOIN e.specializations s WHERE s = :specialization")
-    Page<Expert> findBySpecializationsContaining(String specialization, Pageable pageable);
-    
+    @Query("SELECT e FROM Expert e JOIN e.technologies t WHERE t = :technology")
+    Page<Expert> findBySpecializationsContaining(String technology, Pageable pageable);
+
     /**
-     * Searches for experts by name, bio, or specialization with pagination.
+     * Searches for experts by name, bio, or technology with pagination.
      *
      * @param keyword the search keyword
      * @param pageable the pagination information
      * @return a page of experts
      */
-    @Query("SELECT e FROM Expert e JOIN e.userProfile u LEFT JOIN e.specializations s WHERE " +
+    @Query("SELECT DISTINCT e FROM Expert e JOIN e.userProfile u LEFT JOIN e.technologies t WHERE " +
            "LOWER(u.displayName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(e.bio) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(s) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+           "LOWER(t) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<Expert> searchExperts(String keyword, Pageable pageable);
 }

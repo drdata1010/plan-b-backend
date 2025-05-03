@@ -1,9 +1,9 @@
 package com.planb.supportticket.service;
 
-import com.planb.supportticket.dto.ConsultationDTO;
 import com.planb.supportticket.dto.ExpertDTO;
 import com.planb.supportticket.dto.ExpertAvailabilityDTO;
-import com.planb.supportticket.entity.Consultation;
+import com.planb.supportticket.dto.ExpertSessionDTO;
+import com.planb.supportticket.entity.ExpertSession;
 import com.planb.supportticket.entity.Expert;
 import com.planb.supportticket.entity.ExpertAvailabilitySchedule;
 import org.springframework.data.domain.Page;
@@ -149,95 +149,95 @@ public interface ExpertService {
     List<ExpertAvailabilitySchedule> getAvailabilitySchedulesByDay(UUID expertId, DayOfWeek dayOfWeek);
 
     /**
-     * Schedules a consultation with an expert.
+     * Schedules a session with an expert.
      *
      * @param expertId the expert ID
-     * @param consultationDTO the consultation data
-     * @param userId the ID of the user scheduling the consultation
-     * @return the scheduled consultation
+     * @param sessionDTO the session data
+     * @param userId the ID of the user scheduling the session
+     * @return the scheduled session
      */
-    Consultation scheduleConsultation(UUID expertId, ConsultationDTO consultationDTO, UUID userId);
+    ExpertSession scheduleExpertSession(UUID expertId, ExpertSessionDTO sessionDTO, UUID userId);
 
     /**
-     * Gets a consultation by ID.
+     * Gets a session by ID.
      *
-     * @param consultationId the consultation ID
-     * @return the consultation
+     * @param sessionId the session ID
+     * @return the session
      */
-    Consultation getConsultationById(UUID consultationId);
+    ExpertSession getExpertSessionById(UUID sessionId);
 
     /**
-     * Updates a consultation.
+     * Updates a session.
      *
-     * @param consultationId the consultation ID
-     * @param consultationDTO the updated consultation data
-     * @return the updated consultation
+     * @param sessionId the session ID
+     * @param sessionDTO the updated session data
+     * @return the updated session
      */
-    Consultation updateConsultation(UUID consultationId, ConsultationDTO consultationDTO);
+    ExpertSession updateExpertSession(UUID sessionId, ExpertSessionDTO sessionDTO);
 
     /**
-     * Cancels a consultation.
+     * Cancels a session.
      *
-     * @param consultationId the consultation ID
+     * @param sessionId the session ID
      * @param reason the cancellation reason
-     * @param cancelledBy the ID of the user cancelling the consultation
-     * @return the cancelled consultation
+     * @param cancelledBy the ID of the user cancelling the session
+     * @return the cancelled session
      */
-    Consultation cancelConsultation(UUID consultationId, String reason, UUID cancelledBy);
+    ExpertSession cancelExpertSession(UUID sessionId, String reason, UUID cancelledBy);
 
     /**
-     * Gets consultations for an expert with pagination.
+     * Gets sessions for an expert with pagination.
      *
      * @param expertId the expert ID
      * @param pageable the pagination information
-     * @return a page of consultations
+     * @return a page of sessions
      */
-    Page<Consultation> getConsultationsByExpertId(UUID expertId, Pageable pageable);
+    Page<ExpertSession> getExpertSessionsByExpertId(UUID expertId, Pageable pageable);
 
     /**
-     * Gets consultations for a user with pagination.
+     * Gets sessions for a user with pagination.
      *
      * @param userId the user ID
      * @param pageable the pagination information
-     * @return a page of consultations
+     * @return a page of sessions
      */
-    Page<Consultation> getConsultationsByUserId(UUID userId, Pageable pageable);
+    Page<ExpertSession> getExpertSessionsByUserId(UUID userId, Pageable pageable);
 
     /**
-     * Gets upcoming consultations for an expert.
+     * Gets upcoming sessions for an expert.
      *
      * @param expertId the expert ID
-     * @return a list of upcoming consultations
+     * @return a list of upcoming sessions
      */
-    List<Consultation> getUpcomingConsultationsForExpert(UUID expertId);
+    List<ExpertSession> getUpcomingSessionsForExpert(UUID expertId);
 
     /**
-     * Gets upcoming consultations for a user.
+     * Gets upcoming sessions for a user.
      *
      * @param userId the user ID
-     * @return a list of upcoming consultations
+     * @return a list of upcoming sessions
      */
-    List<Consultation> getUpcomingConsultationsForUser(UUID userId);
+    List<ExpertSession> getUpcomingSessionsForUser(UUID userId);
 
     /**
-     * Completes a consultation.
+     * Completes a session.
      *
-     * @param consultationId the consultation ID
+     * @param sessionId the session ID
      * @param notes the completion notes
-     * @return the completed consultation
+     * @return the completed session
      */
-    Consultation completeConsultation(UUID consultationId, String notes);
+    ExpertSession completeExpertSession(UUID sessionId, String notes);
 
     /**
-     * Rates a consultation.
+     * Rates a session.
      *
-     * @param consultationId the consultation ID
+     * @param sessionId the session ID
      * @param rating the rating (1-5)
      * @param feedback the feedback
      * @param userId the ID of the user providing the rating
-     * @return the rated consultation
+     * @return the rated session
      */
-    Consultation rateConsultation(UUID consultationId, int rating, String feedback, UUID userId);
+    ExpertSession rateExpertSession(UUID sessionId, int rating, String feedback, UUID userId);
 
     /**
      * Gets the average rating for an expert.
@@ -257,30 +257,56 @@ public interface ExpertService {
     Expert updateHourlyRate(UUID expertId, double hourlyRate);
 
     /**
-     * Adds a specialization to an expert.
+     * Adds a technology to an expert.
      *
      * @param expertId the expert ID
-     * @param specialization the specialization to add
+     * @param technology the technology to add
      * @return the updated expert profile
      */
-    Expert addSpecialization(UUID expertId, String specialization);
+    Expert addTechnology(UUID expertId, String technology);
 
     /**
-     * Removes a specialization from an expert.
+     * Removes a technology from an expert.
      *
      * @param expertId the expert ID
-     * @param specialization the specialization to remove
+     * @param technology the technology to remove
      * @return the updated expert profile
      */
-    Expert removeSpecialization(UUID expertId, String specialization);
+    Expert removeTechnology(UUID expertId, String technology);
 
     /**
-     * Gets specializations for an expert.
+     * Gets technologies for an expert.
      *
      * @param expertId the expert ID
-     * @return a set of specializations
+     * @return a set of technologies
      */
-    Set<String> getSpecializations(UUID expertId);
+    Set<String> getTechnologies(UUID expertId);
+
+    /**
+     * Adds a module to an expert.
+     *
+     * @param expertId the expert ID
+     * @param module the module to add
+     * @return the updated expert profile
+     */
+    Expert addModule(UUID expertId, String module);
+
+    /**
+     * Removes a module from an expert.
+     *
+     * @param expertId the expert ID
+     * @param module the module to remove
+     * @return the updated expert profile
+     */
+    Expert removeModule(UUID expertId, String module);
+
+    /**
+     * Gets modules for an expert.
+     *
+     * @param expertId the expert ID
+     * @return a set of modules
+     */
+    Set<String> getModules(UUID expertId);
 
     /**
      * Searches for experts by keyword.
@@ -290,4 +316,12 @@ public interface ExpertService {
      * @return a page of expert profiles
      */
     Page<Expert> searchExperts(String keyword, Pageable pageable);
+
+    /**
+     * Updates an expert entity.
+     *
+     * @param expert the expert entity to update
+     * @return the updated expert entity
+     */
+    Expert updateExpert(Expert expert);
 }

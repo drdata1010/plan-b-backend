@@ -1,9 +1,17 @@
 spring:
   application:
     name: support-ticket-system
-  # Common database configuration
+  # Cloud SQL (PostgreSQL) configuration
   datasource:
     driver-class-name: org.postgresql.Driver
+    # For local development
+    url: jdbc:postgresql://localhost:5432/support_ticket_db
+    username: postgres
+    password: postgres
+    # For Cloud SQL
+    # url: jdbc:postgresql:///${DB_NAME}?cloudSqlInstance=${CLOUD_SQL_INSTANCE}&socketFactory=com.google.cloud.sql.postgres.SocketFactory&user=${DB_USERNAME}&password=${DB_PASSWORD}
+    # username: ${DB_USERNAME}
+    # password: ${DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -17,6 +25,22 @@ spring:
     serialization:
       write-dates-as-timestamps: false
     time-zone: UTC
+  # Mail configuration (for Gmail/SMTP)
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:no-reply@example.com}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
 
 # Server configuration
 server:
@@ -42,59 +66,67 @@ cors:
   allow-credentials: true
   max-age: 3600
 
-# AWS Configuration
-aws:
-  # Region Configuration
-  region: ${AWS_REGION:us-east-1}
-  access-key: ${AWS_ACCESS_KEY:}
-  secret-key: ${AWS_SECRET_KEY:}
+# GCP Configuration
+gcp:
+  # Project Configuration
+  project-id: ${GCP_PROJECT_ID:support-ticket-system}
   credentials:
-    use-default: ${AWS_USE_DEFAULT_CREDENTIALS:true}
+    use-default: ${GCP_USE_DEFAULT_CREDENTIALS:true}
+    path: ${GCP_CREDENTIALS_PATH:}
 
-  # S3 Configuration
-  s3:
-    bucket-name: ${AWS_S3_BUCKET_NAME:support-ticket-system-files}
-    endpoint: ${AWS_S3_ENDPOINT:}
-    presigned-url-expiration: ${AWS_S3_PRESIGNED_URL_EXPIRATION:3600}
-    # Additional S3 Configuration
-    region: ${AWS_S3_REGION:${AWS_REGION:us-east-1}}
-    public-bucket: ${AWS_S3_PUBLIC_BUCKET:false}
+  # Google Cloud Storage Configuration
+  storage:
+    bucket-name: ${GCP_STORAGE_BUCKET_NAME:support-ticket-system-files}
+    signed-url-expiration: ${GCP_STORAGE_SIGNED_URL_EXPIRATION:3600}
+    public-bucket: ${GCP_STORAGE_PUBLIC_BUCKET:false}
     folders:
-      attachments: ${AWS_S3_FOLDER_ATTACHMENTS:attachments}
-      profiles: ${AWS_S3_FOLDER_PROFILES:profiles}
-      tickets: ${AWS_S3_FOLDER_TICKETS:tickets}
-      temp: ${AWS_S3_FOLDER_TEMP:temp}
-    max-file-size: ${AWS_S3_MAX_FILE_SIZE:10485760} # 10MB
-    allowed-file-types: ${AWS_S3_ALLOWED_FILE_TYPES:jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,txt,csv,zip}
+      attachments: ${GCP_STORAGE_FOLDER_ATTACHMENTS:attachments}
+      profiles: ${GCP_STORAGE_FOLDER_PROFILES:profiles}
+      tickets: ${GCP_STORAGE_FOLDER_TICKETS:tickets}
+      temp: ${GCP_STORAGE_FOLDER_TEMP:temp}
+    max-file-size: ${GCP_STORAGE_MAX_FILE_SIZE:10485760} # 10MB
+    allowed-file-types: ${GCP_STORAGE_ALLOWED_FILE_TYPES:jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,txt,csv,zip}
 
-  # SES Configuration
-  ses:
-    from-email: ${AWS_SES_FROM_EMAIL:no-reply@example.com}
-    reply-to-email: ${AWS_SES_REPLY_TO_EMAIL:}
-    endpoint: ${AWS_SES_ENDPOINT:}
-    # Additional SES Configuration
-    region: ${AWS_SES_REGION:${AWS_REGION:us-east-1}}
-    sandbox-mode: ${AWS_SES_SANDBOX_MODE:true}
-    templates:
-      welcome: ${AWS_SES_TEMPLATE_WELCOME:welcome-template}
-      password-reset: ${AWS_SES_TEMPLATE_PASSWORD_RESET:password-reset-template}
-      ticket-created: ${AWS_SES_TEMPLATE_TICKET_CREATED:ticket-created-template}
-      ticket-updated: ${AWS_SES_TEMPLATE_TICKET_UPDATED:ticket-updated-template}
-      ticket-resolved: ${AWS_SES_TEMPLATE_TICKET_RESOLVED:ticket-resolved-template}
-
-  # Parameter Store Configuration
-  ssm:
-    parameter-path: ${AWS_SSM_PARAMETER_PATH:/support-ticket-system/}
-    endpoint: ${AWS_SSM_ENDPOINT:}
-    cache-ttl-seconds: ${AWS_SSM_CACHE_TTL_SECONDS:300}
-    preload-parameters: ${AWS_SSM_PRELOAD_PARAMETERS:false}
-    # Additional Parameter Store Configuration
-    region: ${AWS_SSM_REGION:${AWS_REGION:us-east-1}}
+  # Secret Manager Configuration
+  secret-manager:
+    cache-ttl-seconds: ${GCP_SECRET_MANAGER_CACHE_TTL_SECONDS:300}
     paths:
-      secrets: ${AWS_SSM_PATH_SECRETS:/support-ticket-system/secrets/}
-      config: ${AWS_SSM_PATH_CONFIG:/support-ticket-system/config/}
-      api-keys: ${AWS_SSM_PATH_API_KEYS:/support-ticket-system/api-keys/}
-      feature-flags: ${AWS_SSM_PATH_FEATURE_FLAGS:/support-ticket-system/feature-flags/}
+      secrets: ${GCP_SECRET_MANAGER_PATH_SECRETS:secrets/}
+      config: ${GCP_SECRET_MANAGER_PATH_CONFIG:config/}
+      api-keys: ${GCP_SECRET_MANAGER_PATH_API_KEYS:api-keys/}
+      feature-flags: ${GCP_SECRET_MANAGER_PATH_FEATURE_FLAGS:feature-flags/}
+
+# Spring Mail Configuration (for Gmail/SMTP) is added to the main spring section
+
+# Twilio Configuration for SMS
+twilio:
+  enabled: ${TWILIO_ENABLED:false}
+  account-sid: ${TWILIO_ACCOUNT_SID:}
+  auth-token: ${TWILIO_AUTH_TOKEN:}
+  phone-number: ${TWILIO_PHONE_NUMBER:}
+
+# OpenAI API Configuration
+openai:
+  api:
+    key: ${OPENAI_API_KEY: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}
+    url: ${OPENAI_API_URL:https://api.openai.com/v1/chat/completions}
+    model: ${OPENAI_API_MODEL:gpt-4o}
+
+# ChatGPT CLI Configuration
+chatgpt:
+  cli:
+    enabled: ${CHATGPT_CLI_ENABLED:false}
+
+# Registration Configuration
+registration:
+  # Email verification required
+  email-verification-required: ${REGISTRATION_EMAIL_VERIFICATION_REQUIRED:false}
+  # SMS verification required
+  sms-verification-required: ${REGISTRATION_SMS_VERIFICATION_REQUIRED:false}
+  # Default roles
+  default-user-role: USER
+  default-client-role: CLIENT
+  default-expert-role: EXPERT
 
 # WebSocket Configuration
 websocket:
@@ -190,6 +222,24 @@ firebase:
   database:
     url: ${FIREBASE_DATABASE_URL:}
 
+# AWS Configuration
+aws:
+  region: ${AWS_REGION:us-east-1}
+  credentials:
+    use-default: ${AWS_USE_DEFAULT_CREDENTIALS:true}
+  s3:
+    bucket-name: ${AWS_S3_BUCKET:support-ticket-system-files}
+    endpoint: ${AWS_S3_ENDPOINT:}
+    presigned-url-expiration: ${AWS_S3_PRESIGNED_URL_EXPIRATION:3600}
+  ssm:
+    parameter-path: ${AWS_SSM_PARAMETER_PATH:/support-ticket-system}
+    cache-ttl-seconds: ${AWS_SSM_CACHE_TTL:300}
+    preload-parameters: ${AWS_SSM_PRELOAD:false}
+  ses:
+    endpoint: ${AWS_SES_ENDPOINT:}
+    from-email: ${AWS_SES_FROM_EMAIL:no-reply@example.com}
+    reply-to-email: ${AWS_SES_REPLY_TO_EMAIL:}
+
 # Springdoc OpenAPI Configuration
 springdoc:
   api-docs:
@@ -243,9 +293,17 @@ spring:
     activate:
       on-profile: prod
   datasource:
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    # Cloud SQL connection
+    url: jdbc:postgresql:///${DB_NAME}?cloudSqlInstance=${CLOUD_SQL_INSTANCE}&socketFactory=com.google.cloud.sql.postgres.SocketFactory
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    # Connection pool settings
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 20000 # 20 seconds
+      idle-timeout: 300000 # 5 minutes
+      max-lifetime: 1200000 # 20 minutes
   jpa:
     show-sql: false
     hibernate:

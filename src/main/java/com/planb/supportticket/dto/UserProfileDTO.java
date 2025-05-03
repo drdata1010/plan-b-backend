@@ -17,14 +17,23 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserProfileDTO {
-    
+
     private UUID id;
     private String firebaseUid;
     private String email;
     private String displayName;
     private String firstName;
     private String lastName;
-    private String phoneNumber;
+    private String mobileNumber;
+
+    // For backward compatibility
+    public String getPhoneNumber() {
+        return mobileNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.mobileNumber = phoneNumber;
+    }
     private String profilePictureUrl;
     private String bio;
     private LocalDateTime lastLogin;

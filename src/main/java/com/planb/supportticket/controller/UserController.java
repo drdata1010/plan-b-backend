@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class UserController {
     private final UserService userService;
-    
+
     /**
      * Gets all user profiles.
      *
@@ -38,14 +38,14 @@ public class UserController {
     @GetMapping
     public ResponseEntity<List<UserProfileDTO>> getAllUserProfiles() {
         List<UserProfile> userProfiles = userService.getAllUserProfiles();
-        
+
         List<UserProfileDTO> response = userProfiles.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
-        
+
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Gets a user profile by ID.
      *
@@ -55,11 +55,11 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<UserProfileDTO> getUserProfileById(@PathVariable UUID id) {
         UserProfile userProfile = userService.getUserProfileById(id);
-        
+
         UserProfileDTO response = convertToDTO(userProfile);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Gets a user profile by Firebase UID.
      *
@@ -69,11 +69,11 @@ public class UserController {
     @GetMapping("/firebase/{firebaseUid}")
     public ResponseEntity<UserProfileDTO> getUserProfileByFirebaseUid(@PathVariable String firebaseUid) {
         UserProfile userProfile = userService.getUserProfileByFirebaseUid(firebaseUid);
-        
+
         UserProfileDTO response = convertToDTO(userProfile);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Gets a user profile by email.
      *
@@ -83,11 +83,11 @@ public class UserController {
     @GetMapping("/email")
     public ResponseEntity<UserProfileDTO> getUserProfileByEmail(@RequestParam String email) {
         UserProfile userProfile = userService.getUserProfileByEmail(email);
-        
+
         UserProfileDTO response = convertToDTO(userProfile);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Updates a user profile.
      *
@@ -99,13 +99,13 @@ public class UserController {
     public ResponseEntity<UserProfileDTO> updateUserProfile(
             @PathVariable UUID id,
             @Valid @RequestBody UserProfileDTO userProfileDTO) {
-        
+
         UserProfile userProfile = userService.updateUserProfile(id, userProfileDTO);
-        
+
         UserProfileDTO response = convertToDTO(userProfile);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Updates a user's profile picture.
      *
@@ -117,16 +117,16 @@ public class UserController {
     public ResponseEntity<UserProfileDTO> updateProfilePicture(
             @PathVariable UUID id,
             @RequestParam("file") MultipartFile file) {
-        
+
         // In a real implementation, you would upload the file to S3 and get the URL
         String profilePictureUrl = "https://example.com/profile-pictures/" + id.toString() + ".jpg";
-        
+
         UserProfile userProfile = userService.updateProfilePicture(id, profilePictureUrl);
-        
+
         UserProfileDTO response = convertToDTO(userProfile);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Gets user profiles by role.
      *
@@ -136,14 +136,14 @@ public class UserController {
     @GetMapping("/role/{role}")
     public ResponseEntity<List<UserProfileDTO>> getUserProfilesByRole(@PathVariable String role) {
         List<UserProfile> userProfiles = userService.getUserProfilesByRole(role);
-        
+
         List<UserProfileDTO> response = userProfiles.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
-        
+
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Adds a role to a user.
      *
@@ -155,13 +155,13 @@ public class UserController {
     public ResponseEntity<UserProfileDTO> addRoleToUser(
             @PathVariable UUID id,
             @RequestParam String role) {
-        
+
         UserProfile userProfile = userService.addRoleToUser(id, role);
-        
+
         UserProfileDTO response = convertToDTO(userProfile);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Removes a role from a user.
      *
@@ -173,13 +173,13 @@ public class UserController {
     public ResponseEntity<UserProfileDTO> removeRoleFromUser(
             @PathVariable UUID id,
             @RequestParam String role) {
-        
+
         UserProfile userProfile = userService.removeRoleFromUser(id, role);
-        
+
         UserProfileDTO response = convertToDTO(userProfile);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Gets the roles for a user.
      *
@@ -191,7 +191,7 @@ public class UserController {
         Set<String> roles = userService.getUserRoles(id);
         return ResponseEntity.ok(roles);
     }
-    
+
     /**
      * Disables a user account.
      *
@@ -201,11 +201,11 @@ public class UserController {
     @PostMapping("/{id}/disable")
     public ResponseEntity<UserProfileDTO> disableUserAccount(@PathVariable UUID id) {
         UserProfile userProfile = userService.disableUserAccount(id);
-        
+
         UserProfileDTO response = convertToDTO(userProfile);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Enables a user account.
      *
@@ -215,11 +215,11 @@ public class UserController {
     @PostMapping("/{id}/enable")
     public ResponseEntity<UserProfileDTO> enableUserAccount(@PathVariable UUID id) {
         UserProfile userProfile = userService.enableUserAccount(id);
-        
+
         UserProfileDTO response = convertToDTO(userProfile);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Checks if a user has a specific role.
      *
@@ -231,11 +231,11 @@ public class UserController {
     public ResponseEntity<Boolean> hasRole(
             @PathVariable UUID id,
             @RequestParam String role) {
-        
+
         boolean hasRole = userService.hasRole(id, role);
         return ResponseEntity.ok(hasRole);
     }
-    
+
     /**
      * Gets the current user's profile.
      *
@@ -245,14 +245,14 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<UserProfileDTO> getCurrentUserProfile(
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         UUID userId = getUserIdFromUserDetails(userDetails);
         UserProfile userProfile = userService.getUserProfileById(userId);
-        
+
         UserProfileDTO response = convertToDTO(userProfile);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Updates the current user's profile.
      *
@@ -264,14 +264,14 @@ public class UserController {
     public ResponseEntity<UserProfileDTO> updateCurrentUserProfile(
             @Valid @RequestBody UserProfileDTO userProfileDTO,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         UUID userId = getUserIdFromUserDetails(userDetails);
         UserProfile userProfile = userService.updateUserProfile(userId, userProfileDTO);
-        
+
         UserProfileDTO response = convertToDTO(userProfile);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Deletes a user profile.
      *
@@ -283,7 +283,7 @@ public class UserController {
         userService.deleteUserProfile(id);
         return ResponseEntity.noContent().build();
     }
-    
+
     /**
      * Converts a UserProfile entity to a UserProfileDTO.
      *
@@ -298,7 +298,7 @@ public class UserController {
         dto.setDisplayName(userProfile.getDisplayName());
         dto.setFirstName(userProfile.getFirstName());
         dto.setLastName(userProfile.getLastName());
-        dto.setPhoneNumber(userProfile.getPhoneNumber());
+        dto.setPhoneNumber(userProfile.getMobileNumber());
         dto.setProfilePictureUrl(userProfile.getProfilePictureUrl());
         dto.setBio(userProfile.getBio());
         dto.setLastLogin(userProfile.getLastLogin());
@@ -307,7 +307,7 @@ public class UserController {
         dto.setRoles(userProfile.getRoles());
         return dto;
     }
-    
+
     /**
      * Gets the user ID from the UserDetails.
      *

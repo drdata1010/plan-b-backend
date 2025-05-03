@@ -1,15 +1,15 @@
 package com.planb.supportticket.service.impl;
 
-import com.planb.supportticket.dto.ConsultationDTO;
 import com.planb.supportticket.dto.ExpertDTO;
 import com.planb.supportticket.dto.ExpertAvailabilityDTO;
-import com.planb.supportticket.entity.Consultation;
+import com.planb.supportticket.dto.ExpertSessionDTO;
+import com.planb.supportticket.entity.ExpertSession;
 import com.planb.supportticket.entity.Expert;
 import com.planb.supportticket.entity.ExpertAvailabilitySchedule;
 import com.planb.supportticket.entity.UserProfile;
 import com.planb.supportticket.entity.enums.ExpertAvailability;
 import com.planb.supportticket.entity.enums.ExpertSpecialization;
-import com.planb.supportticket.repository.ConsultationRepository;
+import com.planb.supportticket.repository.ExpertSessionRepository;
 import com.planb.supportticket.repository.ExpertAvailabilityScheduleRepository;
 import com.planb.supportticket.repository.ExpertRepository;
 import com.planb.supportticket.repository.UserProfileRepository;
@@ -42,7 +42,7 @@ public class ExpertServiceImpl implements ExpertService {
     private final ExpertRepository expertRepository;
     private final UserProfileRepository userProfileRepository;
     private final ExpertAvailabilityScheduleRepository availabilityRepository;
-    private final ConsultationRepository consultationRepository;
+    private final ExpertSessionRepository expertSessionRepository;
     private final NotificationService notificationService;
 
     @Override
@@ -183,65 +183,65 @@ public class ExpertServiceImpl implements ExpertService {
 
     @Override
     @Transactional
-    public Consultation scheduleConsultation(UUID expertId, ConsultationDTO consultationDTO, UUID userId) {
+    public ExpertSession scheduleExpertSession(UUID expertId, ExpertSessionDTO sessionDTO, UUID userId) {
         // Simplified implementation
         return null;
     }
 
     @Override
-    public Consultation getConsultationById(UUID consultationId) {
-        // Simplified implementation
-        return null;
-    }
-
-    @Override
-    @Transactional
-    public Consultation updateConsultation(UUID consultationId, ConsultationDTO consultationDTO) {
+    public ExpertSession getExpertSessionById(UUID sessionId) {
         // Simplified implementation
         return null;
     }
 
     @Override
     @Transactional
-    public Consultation cancelConsultation(UUID consultationId, String reason, UUID cancelledBy) {
+    public ExpertSession updateExpertSession(UUID sessionId, ExpertSessionDTO sessionDTO) {
         // Simplified implementation
         return null;
     }
 
     @Override
-    public Page<Consultation> getConsultationsByExpertId(UUID expertId, Pageable pageable) {
+    @Transactional
+    public ExpertSession cancelExpertSession(UUID sessionId, String reason, UUID cancelledBy) {
+        // Simplified implementation
+        return null;
+    }
+
+    @Override
+    public Page<ExpertSession> getExpertSessionsByExpertId(UUID expertId, Pageable pageable) {
         // Simplified implementation
         return Page.empty();
     }
 
     @Override
-    public Page<Consultation> getConsultationsByUserId(UUID userId, Pageable pageable) {
+    public Page<ExpertSession> getExpertSessionsByUserId(UUID userId, Pageable pageable) {
         // Simplified implementation
         return Page.empty();
     }
 
     @Override
-    public List<Consultation> getUpcomingConsultationsForExpert(UUID expertId) {
+    public List<ExpertSession> getUpcomingSessionsForExpert(UUID expertId) {
         // Simplified implementation
         return List.of();
     }
 
     @Override
-    public List<Consultation> getUpcomingConsultationsForUser(UUID userId) {
+    public List<ExpertSession> getUpcomingSessionsForUser(UUID userId) {
         // Simplified implementation
         return List.of();
     }
 
     @Override
     @Transactional
-    public Consultation completeConsultation(UUID consultationId, String notes) {
+    public ExpertSession completeExpertSession(UUID sessionId, String notes) {
         // Simplified implementation
         return null;
     }
 
     @Override
     @Transactional
-    public Consultation rateConsultation(UUID consultationId, int rating, String feedback, UUID userId) {
+    public ExpertSession rateExpertSession(UUID sessionId, int rating, String feedback, UUID userId) {
         // Simplified implementation
         return null;
     }
@@ -261,39 +261,57 @@ public class ExpertServiceImpl implements ExpertService {
 
     @Override
     @Transactional
-    public Expert addSpecialization(UUID expertId, String specialization) {
+    public Expert addTechnology(UUID expertId, String technology) {
         Expert expert = getExpertById(expertId);
-        try {
-            expert.getSpecializations().add(ExpertSpecialization.valueOf(specialization));
-            return expertRepository.save(expert);
-        } catch (IllegalArgumentException e) {
-            return expert;
-        }
+        expert.getTechnologies().add(technology);
+        return expertRepository.save(expert);
     }
 
     @Override
     @Transactional
-    public Expert removeSpecialization(UUID expertId, String specialization) {
+    public Expert removeTechnology(UUID expertId, String technology) {
         Expert expert = getExpertById(expertId);
-        try {
-            expert.getSpecializations().remove(ExpertSpecialization.valueOf(specialization));
-            return expertRepository.save(expert);
-        } catch (IllegalArgumentException e) {
-            return expert;
-        }
+        expert.getTechnologies().remove(technology);
+        return expertRepository.save(expert);
     }
 
     @Override
-    public Set<String> getSpecializations(UUID expertId) {
+    public Set<String> getTechnologies(UUID expertId) {
         Expert expert = getExpertById(expertId);
-        return expert.getSpecializations().stream()
-                .map(Enum::name)
-                .collect(Collectors.toSet());
+        return expert.getTechnologies();
+    }
+
+    @Override
+    @Transactional
+    public Expert addModule(UUID expertId, String module) {
+        Expert expert = getExpertById(expertId);
+        expert.getModules().add(module);
+        return expertRepository.save(expert);
+    }
+
+    @Override
+    @Transactional
+    public Expert removeModule(UUID expertId, String module) {
+        Expert expert = getExpertById(expertId);
+        expert.getModules().remove(module);
+        return expertRepository.save(expert);
+    }
+
+    @Override
+    public Set<String> getModules(UUID expertId) {
+        Expert expert = getExpertById(expertId);
+        return expert.getModules();
     }
 
     @Override
     public Page<Expert> searchExperts(String keyword, Pageable pageable) {
         // Simplified implementation
         return expertRepository.findAll(pageable);
+    }
+
+    @Override
+    @Transactional
+    public Expert updateExpert(Expert expert) {
+        return expertRepository.save(expert);
     }
 }
