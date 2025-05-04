@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * Handles chat sessions, messages, and AI interactions.
  */
 @RestController
-@RequestMapping("/api/chat")
+@RequestMapping("/chat")
 @RequiredArgsConstructor
 @Slf4j
 public class ChatController {

@@ -1,5 +1,6 @@
 package com.planb.supportticket.entity;
 
+import com.planb.supportticket.entity.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.NaturalId;
@@ -116,8 +117,9 @@ public class UserProfile extends BaseEntity {
         name = "user_roles",
         joinColumns = @JoinColumn(name = "user_id")
     )
+    @Enumerated(EnumType.STRING)
     @Column(name = "role")
-    private Set<String> roles = new HashSet<>();
+    private Set<UserRole> roles = new HashSet<>();
 
     @OneToOne(mappedBy = "userProfile", cascade = CascadeType.ALL, orphanRemoval = true)
     private Expert expertProfile;
@@ -145,7 +147,7 @@ public class UserProfile extends BaseEntity {
      *
      * @param role the role to add
      */
-    public void addRole(String role) {
+    public void addRole(UserRole role) {
         roles.add(role);
     }
 
@@ -154,7 +156,7 @@ public class UserProfile extends BaseEntity {
      *
      * @param role the role to remove
      */
-    public void removeRole(String role) {
+    public void removeRole(UserRole role) {
         roles.remove(role);
     }
 
@@ -164,7 +166,17 @@ public class UserProfile extends BaseEntity {
      * @param role the role to check
      * @return true if the user has the role, false otherwise
      */
-    public boolean hasRole(String role) {
+    public boolean hasRole(UserRole role) {
         return roles.contains(role);
+    }
+
+    /**
+     * Gets the Spring Security role name for a given role.
+     *
+     * @param role the role
+     * @return the Spring Security role name
+     */
+    public static String getSpringSecurityRoleName(UserRole role) {
+        return "ROLE_" + role.name();
     }
 }

@@ -6,8 +6,8 @@ import com.google.cloud.secretmanager.v1.SecretName;
 import com.google.cloud.secretmanager.v1.SecretPayload;
 import com.google.cloud.secretmanager.v1.SecretVersionName;
 import com.google.protobuf.ByteString;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -21,11 +21,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * Service for accessing secrets from Google Secret Manager.
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class SecretManagerService {
 
-    private final SecretManagerServiceClient secretManagerClient;
+    @Autowired(required = false)
+    private SecretManagerServiceClient secretManagerClient;
 
     @Value("${gcp.project-id}")
     private String projectId;

@@ -8,6 +8,7 @@ import com.planb.supportticket.dto.AuthRequest;
 import com.planb.supportticket.dto.AuthResponse;
 import com.planb.supportticket.dto.UserProfileDTO;
 import com.planb.supportticket.entity.UserProfile;
+import com.planb.supportticket.entity.enums.UserRole;
 import com.planb.supportticket.service.UserService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Controller for authentication operations.
@@ -75,7 +78,11 @@ public class AuthController {
             response.setEmail(userProfile.getEmail());
             response.setDisplayName(userProfile.getDisplayName());
             response.setProfileId(userProfile.getId());
-            response.setRoles(userProfile.getRoles());
+            // Convert roles to strings
+            Set<String> roleStrings = userProfile.getRoles().stream()
+                    .map(UserRole::name)
+                    .collect(Collectors.toSet());
+            response.setRoles(roleStrings);
             response.setEmailVerified(userProfile.isEmailVerified());
 
             return ResponseEntity.ok(response);
@@ -109,7 +116,11 @@ public class AuthController {
             response.setEmail(userProfile.getEmail());
             response.setDisplayName(userProfile.getDisplayName());
             response.setProfileId(userProfile.getId());
-            response.setRoles(userProfile.getRoles());
+            // Convert roles to strings
+            Set<String> roleStrings = userProfile.getRoles().stream()
+                    .map(UserRole::name)
+                    .collect(Collectors.toSet());
+            response.setRoles(roleStrings);
             response.setEmailVerified(userProfile.isEmailVerified());
 
             return ResponseEntity.ok(response);
@@ -131,10 +142,16 @@ public class AuthController {
             @PathVariable UUID userId,
             @RequestParam String role) {
 
-        UserProfile userProfile = userService.addRoleToUser(userId, role);
+        try {
+            UserRole userRole = UserRole.valueOf(role);
+            UserProfile userProfile = userService.addRoleToUser(userId, userRole);
 
-        UserProfileDTO dto = convertToDTO(userProfile);
-        return ResponseEntity.ok(dto);
+            UserProfileDTO dto = convertToDTO(userProfile);
+            return ResponseEntity.ok(dto);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid role: {}", role);
+            return ResponseEntity.badRequest().body(null);
+        }
     }
 
     /**
@@ -149,10 +166,16 @@ public class AuthController {
             @PathVariable UUID userId,
             @RequestParam String role) {
 
-        UserProfile userProfile = userService.removeRoleFromUser(userId, role);
+        try {
+            UserRole userRole = UserRole.valueOf(role);
+            UserProfile userProfile = userService.removeRoleFromUser(userId, userRole);
 
-        UserProfileDTO dto = convertToDTO(userProfile);
-        return ResponseEntity.ok(dto);
+            UserProfileDTO dto = convertToDTO(userProfile);
+            return ResponseEntity.ok(dto);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid role: {}", role);
+            return ResponseEntity.badRequest().body(null);
+        }
     }
 
     /**
@@ -245,7 +268,11 @@ public class AuthController {
         dto.setPhoneNumber(userProfile.getMobileNumber());
         dto.setProfilePictureUrl(userProfile.getProfilePictureUrl());
         dto.setBio(userProfile.getBio());
-        dto.setRoles(userProfile.getRoles());
+        // Convert roles to strings
+        Set<String> roleStrings = userProfile.getRoles().stream()
+                .map(UserRole::name)
+                .collect(Collectors.toSet());
+        dto.setRoles(roleStrings);
         dto.setEmailVerified(userProfile.isEmailVerified());
         dto.setAccountDisabled(userProfile.isAccountDisabled());
         return dto;

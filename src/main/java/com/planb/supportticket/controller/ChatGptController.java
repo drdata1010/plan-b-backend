@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Controller for ChatGPT API operations.
  */
 @RestController
-@RequestMapping("/api/chatgpt")
+@RequestMapping("/chatgpt")
 @RequiredArgsConstructor
 public class ChatGptController {
 

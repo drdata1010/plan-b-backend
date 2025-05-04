@@ -1,7 +1,10 @@
 package com.planb.supportticket.config.gcp;
 
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.secretmanager.v1.AccessSecretVersionResponse;
 import com.google.cloud.secretmanager.v1.SecretManagerServiceClient;
+import com.google.cloud.secretmanager.v1.SecretPayload;
+import com.google.cloud.secretmanager.v1.SecretVersionName;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import lombok.extern.slf4j.Slf4j;
@@ -80,28 +83,8 @@ public class GCPConfig {
             return SecretManagerServiceClient.create();
         } catch (IOException e) {
             log.warn("Failed to create Secret Manager client: {}", e.getMessage());
-            log.warn("Using mock Secret Manager client for local development");
-            return new MockSecretManagerServiceClient(); // Return a mock implementation for local development
-        }
-    }
-
-    /**
-     * Mock implementation of SecretManagerServiceClient for local development.
-     */
-    private static class MockSecretManagerServiceClient extends SecretManagerServiceClient {
-        @Override
-        public AccessSecretVersionResponse accessSecretVersion(SecretVersionName name) {
-            // Return a mock response
-            return AccessSecretVersionResponse.newBuilder()
-                    .setPayload(SecretPayload.newBuilder()
-                            .setData(com.google.protobuf.ByteString.copyFromUtf8("mock-" + name.getSecret() + "-value"))
-                            .build())
-                    .build();
-        }
-
-        @Override
-        public void close() {
-            // Do nothing
+            log.warn("Using null Secret Manager client for local development");
+            return null; // Return null for local development
         }
     }
 

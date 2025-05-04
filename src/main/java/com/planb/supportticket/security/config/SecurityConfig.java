@@ -2,17 +2,23 @@ package com.planb.supportticket.security.config;
 
 import com.planb.supportticket.security.firebase.FirebaseAuthenticationFilter;
 import com.planb.supportticket.security.firebase.FirebaseTokenValidator;
+import com.planb.supportticket.security.jwt.JwtAuthenticationFilter;
+import com.planb.supportticket.security.jwt.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -34,6 +40,9 @@ public class SecurityConfig {
 
     @Autowired
     private FirebaseTokenValidator firebaseTokenValidator;
+
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
     @Value("${firebase.enabled:true}")
     private boolean firebaseEnabled;
@@ -76,43 +85,53 @@ public class SecurityConfig {
             // Configure session management
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        // Configure authorization rules based on Firebase enabled status
-        if (firebaseEnabled) {
-            http.authorizeHttpRequests(authorize -> authorize
-                // Public endpoints
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/public/**").permitAll()
-                .requestMatchers("/ws/**").permitAll()
-                .requestMatchers("/actuator/health").permitAll()
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+        // Configure authorization rules
+        http.authorizeHttpRequests(authorize -> authorize
+            // Public endpoints
+            .requestMatchers("/auth/**").permitAll()
+            .requestMatchers("/auth/jwt/**").permitAll()
+            .requestMatchers("/public/**").permitAll()
+            .requestMatchers("/ws/**").permitAll()
+            .requestMatchers("/actuator/health").permitAll()
+            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
-                // OPTIONS requests (for CORS preflight)
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            // OPTIONS requests (for CORS preflight)
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // Role-based access
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/support/**").hasAnyRole("SUPPORT", "ADMIN")
+            // Role-based access for user types
+            .requestMatchers("/api/user/**").hasRole("USER")
+            .requestMatchers("/api/expert/**").hasRole("EXPERT")
+            .requestMatchers("/api/admin/**").hasRole("ADMIN")
+            .requestMatchers("/api/support/**").hasAnyRole("SUPPORT", "ADMIN")
 
-                // Require authentication for all other requests
-                .anyRequest().authenticated()
-            );
-        } else {
-            // When Firebase is disabled, allow all requests for development/testing
-            http.authorizeHttpRequests(authorize -> authorize
-                .anyRequest().permitAll()
-            );
-        }
+            // Role-based access for features
+            .requestMatchers("/api/tickets/pick/**").hasRole("EXPERT")
+            .requestMatchers("/api/tickets/assign/**").hasAnyRole("EXPERT", "ADMIN", "SUPPORT")
+            .requestMatchers("/api/tickets/close/**").hasAnyRole("EXPERT", "ADMIN", "SUPPORT")
+            .requestMatchers("/api/ai/**").hasAnyRole("USER", "EXPERT", "ADMIN")
+
+            // For testing purposes, allow all requests
+            .anyRequest().permitAll()
+        );
+
+        // Add JWT authentication filter
+        http.addFilterBefore(
+                new JwtAuthenticationFilter(jwtTokenProvider),
+                UsernamePasswordAuthenticationFilter.class
+        );
 
         // Add Firebase authentication filter if enabled
         if (firebaseEnabled) {
             http.addFilterBefore(
                     new FirebaseAuthenticationFilter(firebaseTokenValidator),
-                    UsernamePasswordAuthenticationFilter.class
+                    JwtAuthenticationFilter.class
             );
         }
 
         return http.build();
     }
+
+
 
     /**
      * Configures CORS for the application.

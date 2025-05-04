@@ -197,7 +197,7 @@ websocket:
       - id: custom
         name: Deepseek Chat
         provider: deepseek
-        enabled: ${WEBSOCKET_AI_MODEL_DEEPSEEK_ENABLED:false}
+        enabled: ${WEBSOCKET_AI_MODEL_DEEPSEEK_ENABLED:true}
 
 # AI Provider Configuration
 ai:
@@ -211,12 +211,12 @@ ai:
     api-key: ${AI_GOOGLE_API_KEY:}
     endpoint: ${AI_GOOGLE_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent}
   deepseek:
-    api-key: ${AI_DEEPSEEK_API_KEY:}
+    api-key: ${AI_DEEPSEEK_API_KEY:sk-1978921112d7461894588d63e574fb65}
     endpoint: ${AI_DEEPSEEK_ENDPOINT:https://api.deepseek.com/v1/chat/completions}
 
 # Firebase Configuration
 firebase:
-  enabled: ${FIREBASE_ENABLED:false}
+  enabled: ${FIREBASE_ENABLED:true}
   credentials:
     path: ${FIREBASE_CREDENTIALS_PATH:firebase-service-account.json}
   database:

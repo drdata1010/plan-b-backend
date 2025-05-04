@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
 import com.planb.supportticket.dto.UserProfileDTO;
 import com.planb.supportticket.entity.UserProfile;
+import com.planb.supportticket.entity.enums.UserRole;
 import com.planb.supportticket.exception.ResourceNotFoundException;
 import com.planb.supportticket.repository.UserProfileRepository;
 import com.planb.supportticket.service.UserService;
@@ -17,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * Implementation of the UserService interface.
@@ -54,8 +57,8 @@ public class UserServiceImpl implements UserService {
         userProfile.setAccountDisabled(false);
 
         // Add default role
-        Set<String> roles = new HashSet<>();
-        roles.add("ROLE_USER");
+        Set<UserRole> roles = new HashSet<>();
+        roles.add(UserRole.USER);
         userProfile.setRoles(roles);
 
         // Save and return
@@ -149,19 +152,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserProfile> getUserProfilesByRole(String role) {
+    public List<UserProfile> getUserProfilesByRole(UserRole role) {
         return userProfileRepository.findByRolesContaining(role);
     }
 
     @Override
-    public UserProfile addRoleToUser(UUID id, String role) {
+    public UserProfile addRoleToUser(UUID id, UserRole role) {
         UserProfile userProfile = getUserProfileById(id);
 
-        // Add role if not already present
-        if (!role.startsWith("ROLE_")) {
-            role = "ROLE_" + role;
-        }
-
+        // Add role
         userProfile.addRole(role);
 
         // Update Firebase custom claims
@@ -176,14 +175,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserProfile removeRoleFromUser(UUID id, String role) {
+    public UserProfile removeRoleFromUser(UUID id, UserRole role) {
         UserProfile userProfile = getUserProfileById(id);
 
-        // Remove role if present
-        if (!role.startsWith("ROLE_")) {
-            role = "ROLE_" + role;
-        }
-
+        // Remove role
         userProfile.removeRole(role);
 
         // Update Firebase custom claims
@@ -198,7 +193,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Set<String> getUserRoles(UUID id) {
+    public Set<UserRole> getUserRoles(UUID id) {
         UserProfile userProfile = getUserProfileById(id);
         return userProfile.getRoles();
     }
@@ -255,13 +250,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean hasRole(UUID id, String role) {
+    public boolean hasRole(UUID id, UserRole role) {
         UserProfile userProfile = getUserProfileById(id);
-
-        if (!role.startsWith("ROLE_")) {
-            role = "ROLE_" + role;
-        }
-
         return userProfile.getRoles().contains(role);
     }
 
@@ -295,14 +285,10 @@ public class UserServiceImpl implements UserService {
             return;
         }
 
-        // Convert roles to simple strings without ROLE_ prefix for Firebase
+        // Convert roles to simple strings for Firebase
         List<String> firebaseRoles = new ArrayList<>();
-        for (String role : userProfile.getRoles()) {
-            if (role.startsWith("ROLE_")) {
-                firebaseRoles.add(role.substring(5));
-            } else {
-                firebaseRoles.add(role);
-            }
+        for (UserRole role : userProfile.getRoles()) {
+            firebaseRoles.add(role.name());
         }
 
         // Create claims map
@@ -311,5 +297,40 @@ public class UserServiceImpl implements UserService {
 
         // Update Firebase custom claims
         firebaseAuth.setCustomUserClaims(userProfile.getFirebaseUid(), claims);
+    }
+
+    @Override
+    public Page<UserProfile> getAllUserProfiles(Pageable pageable) {
+        return userProfileRepository.findAll(pageable);
+    }
+
+    @Override
+    public UserProfileDTO convertToDTO(UserProfile userProfile) {
+        if (userProfile == null) {
+            return null;
+        }
+
+        UserProfileDTO dto = new UserProfileDTO();
+        dto.setId(userProfile.getId());
+        dto.setFirebaseUid(userProfile.getFirebaseUid());
+        dto.setEmail(userProfile.getEmail());
+        dto.setDisplayName(userProfile.getDisplayName());
+        dto.setFirstName(userProfile.getFirstName());
+        dto.setLastName(userProfile.getLastName());
+        dto.setMobileNumber(userProfile.getMobileNumber());
+        dto.setProfilePictureUrl(userProfile.getProfilePictureUrl());
+        dto.setBio(userProfile.getBio());
+        dto.setLastLogin(userProfile.getLastLogin());
+        dto.setEmailVerified(userProfile.isEmailVerified());
+        dto.setAccountDisabled(userProfile.isAccountDisabled());
+
+        // Convert roles to strings
+        Set<String> roleDTOs = new HashSet<>();
+        for (UserRole role : userProfile.getRoles()) {
+            roleDTOs.add(role.name());
+        }
+        dto.setRoles(roleDTOs);
+
+        return dto;
     }
 }

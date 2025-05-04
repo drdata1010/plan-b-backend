@@ -5,6 +5,7 @@ import com.planb.supportticket.dto.RegistrationResponse;
 import com.planb.supportticket.dto.UserRegistrationDTO;
 import com.planb.supportticket.entity.Expert;
 import com.planb.supportticket.entity.UserProfile;
+import com.planb.supportticket.entity.enums.UserRole;
 import com.planb.supportticket.service.EmailService;
 import com.planb.supportticket.service.ExpertService;
 import com.planb.supportticket.service.TwilioSMSService;
@@ -149,7 +150,7 @@ public class AuthRegistrationController {
             UserProfile userProfile = createUserProfileFromExpertDTO(registrationDTO);
 
             // Add expert role
-            userService.addRoleToUser(userProfile.getId(), "EXPERT");
+            userService.addRoleToUser(userProfile.getId(), UserRole.EXPERT);
 
             // Create expert profile
             Expert expert = createExpertProfileFromDTO(registrationDTO, userProfile.getId());
@@ -215,9 +216,9 @@ public class AuthRegistrationController {
 
         // Add appropriate role based on customer type
         if ("Client".equals(dto.getCustomerType())) {
-            userProfile.addRole("CLIENT");
+            userProfile.addRole(UserRole.USER); // Using USER role for clients too
         } else {
-            userProfile.addRole("USER");
+            userProfile.addRole(UserRole.USER);
         }
 
         // Save the user profile

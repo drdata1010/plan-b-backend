@@ -2,6 +2,7 @@ package com.planb.supportticket.controller;
 
 import com.planb.supportticket.dto.UserProfileDTO;
 import com.planb.supportticket.entity.UserProfile;
+import com.planb.supportticket.entity.enums.UserRole;
 import com.planb.supportticket.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -135,13 +137,19 @@ public class UserController {
      */
     @GetMapping("/role/{role}")
     public ResponseEntity<List<UserProfileDTO>> getUserProfilesByRole(@PathVariable String role) {
-        List<UserProfile> userProfiles = userService.getUserProfilesByRole(role);
+        try {
+            UserRole userRole = UserRole.valueOf(role);
+            List<UserProfile> userProfiles = userService.getUserProfilesByRole(userRole);
 
-        List<UserProfileDTO> response = userProfiles.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+            List<UserProfileDTO> response = userProfiles.stream()
+                    .map(userService::convertToDTO)
+                    .collect(Collectors.toList());
 
-        return ResponseEntity.ok(response);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid role: {}", role);
+            return ResponseEntity.badRequest().body(Collections.emptyList());
+        }
     }
 
     /**
@@ -156,10 +164,16 @@ public class UserController {
             @PathVariable UUID id,
             @RequestParam String role) {
 
-        UserProfile userProfile = userService.addRoleToUser(id, role);
+        try {
+            UserRole userRole = UserRole.valueOf(role);
+            UserProfile userProfile = userService.addRoleToUser(id, userRole);
 
-        UserProfileDTO response = convertToDTO(userProfile);
-        return ResponseEntity.ok(response);
+            UserProfileDTO response = userService.convertToDTO(userProfile);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid role: {}", role);
+            return ResponseEntity.badRequest().body(null);
+        }
     }
 
     /**
@@ -174,10 +188,16 @@ public class UserController {
             @PathVariable UUID id,
             @RequestParam String role) {
 
-        UserProfile userProfile = userService.removeRoleFromUser(id, role);
+        try {
+            UserRole userRole = UserRole.valueOf(role);
+            UserProfile userProfile = userService.removeRoleFromUser(id, userRole);
 
-        UserProfileDTO response = convertToDTO(userProfile);
-        return ResponseEntity.ok(response);
+            UserProfileDTO response = userService.convertToDTO(userProfile);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid role: {}", role);
+            return ResponseEntity.badRequest().body(null);
+        }
     }
 
     /**
@@ -188,8 +208,12 @@ public class UserController {
      */
     @GetMapping("/{id}/roles")
     public ResponseEntity<Set<String>> getUserRoles(@PathVariable UUID id) {
-        Set<String> roles = userService.getUserRoles(id);
-        return ResponseEntity.ok(roles);
+        Set<UserRole> roles = userService.getUserRoles(id);
+        // Convert to strings
+        Set<String> roleStrings = roles.stream()
+                .map(UserRole::name)
+                .collect(Collectors.toSet());
+        return ResponseEntity.ok(roleStrings);
     }
 
     /**
@@ -232,8 +256,14 @@ public class UserController {
             @PathVariable UUID id,
             @RequestParam String role) {
 
-        boolean hasRole = userService.hasRole(id, role);
-        return ResponseEntity.ok(hasRole);
+        try {
+            UserRole userRole = UserRole.valueOf(role);
+            boolean hasRole = userService.hasRole(id, userRole);
+            return ResponseEntity.ok(hasRole);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid role: {}", role);
+            return ResponseEntity.badRequest().body(false);
+        }
     }
 
     /**
@@ -304,7 +334,11 @@ public class UserController {
         dto.setLastLogin(userProfile.getLastLogin());
         dto.setEmailVerified(userProfile.isEmailVerified());
         dto.setAccountDisabled(userProfile.isAccountDisabled());
-        dto.setRoles(userProfile.getRoles());
+        // Convert roles to strings
+        Set<String> roleStrings = userProfile.getRoles().stream()
+                .map(UserRole::name)
+                .collect(Collectors.toSet());
+        dto.setRoles(roleStrings);
         return dto;
     }
 

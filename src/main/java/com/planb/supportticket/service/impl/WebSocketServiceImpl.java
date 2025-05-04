@@ -3,6 +3,7 @@ package com.planb.supportticket.service.impl;
 import com.planb.supportticket.dto.NotificationDTO;
 import com.planb.supportticket.entity.ChatMessage;
 import com.planb.supportticket.entity.UserProfile;
+import com.planb.supportticket.entity.enums.UserRole;
 import com.planb.supportticket.repository.UserProfileRepository;
 import com.planb.supportticket.service.WebSocketService;
 import lombok.RequiredArgsConstructor;
@@ -32,36 +33,43 @@ public class WebSocketServiceImpl implements WebSocketService {
         if (notification.getTimestamp() == null) {
             notification.setTimestamp(LocalDateTime.now());
         }
-        
+
         // Set ID if not already set
         if (notification.getId() == null) {
             notification.setId(UUID.randomUUID());
         }
-        
+
         // Set user ID
         notification.setUserId(userId);
-        
+
         // Send notification to user's private queue
         messagingTemplate.convertAndSendToUser(
                 userId.toString(),
                 "/queue/notifications",
                 notification
         );
-        
+
         log.debug("Sent notification to user {}: {}", userId, notification.getTitle());
     }
 
     @Override
     public void sendNotificationToRole(String role, NotificationDTO notification) {
-        // Find all users with the specified role
-        List<UserProfile> users = userProfileRepository.findByRolesContaining(role);
-        
-        // Send notification to each user
-        for (UserProfile user : users) {
-            sendNotificationToUser(user.getId(), notification);
+        try {
+            // Convert string role to UserRole enum
+            UserRole userRole = UserRole.valueOf(role);
+
+            // Find all users with the specified role
+            List<UserProfile> users = userProfileRepository.findByRolesContaining(userRole);
+
+            // Send notification to each user
+            for (UserProfile user : users) {
+                sendNotificationToUser(user.getId(), notification);
+            }
+
+            log.debug("Sent notification to {} users with role {}: {}", users.size(), role, notification.getTitle());
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid role: {}", role);
         }
-        
-        log.debug("Sent notification to {} users with role {}: {}", users.size(), role, notification.getTitle());
     }
 
     @Override
@@ -70,15 +78,15 @@ public class WebSocketServiceImpl implements WebSocketService {
         if (notification.getTimestamp() == null) {
             notification.setTimestamp(LocalDateTime.now());
         }
-        
+
         // Set ID if not already set
         if (notification.getId() == null) {
             notification.setId(UUID.randomUUID());
         }
-        
+
         // Broadcast notification to all users
         messagingTemplate.convertAndSend("/topic/notifications", notification);
-        
+
         log.debug("Broadcast notification: {}", notification.getTitle());
     }
 
@@ -89,7 +97,7 @@ public class WebSocketServiceImpl implements WebSocketService {
                 "/topic/room/" + roomId,
                 message
         );
-        
+
         log.debug("Sent message to room {}: {}", roomId, message.getId());
     }
 
@@ -101,7 +109,7 @@ public class WebSocketServiceImpl implements WebSocketService {
                 "/queue/messages",
                 message
         );
-        
+
         log.debug("Sent private message to user {}: {}", userId, message.getId());
     }
 
@@ -111,19 +119,19 @@ public class WebSocketServiceImpl implements WebSocketService {
         String displayName = userProfileRepository.findById(userId)
                 .map(UserProfile::getDisplayName)
                 .orElse("Unknown User");
-        
+
         // Create typing indicator message
         ChatMessage typingMessage = new ChatMessage();
         typingMessage.setId(UUID.randomUUID());
         typingMessage.setMessageType(ChatMessage.MessageType.SYSTEM);
         typingMessage.setContent(displayName + " is typing...");
-        
+
         // Send typing indicator to room
         messagingTemplate.convertAndSend(
                 "/topic/room/" + roomId + "/typing",
                 typingMessage
         );
-        
+
         log.debug("Sent typing indicator for user {} to room {}", userId, roomId);
     }
 
@@ -134,13 +142,13 @@ public class WebSocketServiceImpl implements WebSocketService {
         systemMessage.setId(UUID.randomUUID());
         systemMessage.setMessageType(ChatMessage.MessageType.SYSTEM);
         systemMessage.setContent(content);
-        
+
         // Send system message to room
         messagingTemplate.convertAndSend(
                 "/topic/room/" + roomId,
                 systemMessage
         );
-        
+
         log.debug("Sent system message to room {}: {}", roomId, content);
     }
 
@@ -150,19 +158,19 @@ public class WebSocketServiceImpl implements WebSocketService {
         String displayName = userProfileRepository.findById(userId)
                 .map(UserProfile::getDisplayName)
                 .orElse("Unknown User");
-        
+
         // Create user joined message
         ChatMessage joinMessage = new ChatMessage();
         joinMessage.setId(UUID.randomUUID());
         joinMessage.setMessageType(ChatMessage.MessageType.USER_JOINED);
         joinMessage.setContent(displayName + " joined the chat");
-        
+
         // Send user joined message to room
         messagingTemplate.convertAndSend(
                 "/topic/room/" + roomId,
                 joinMessage
         );
-        
+
         log.debug("Notified that user {} joined room {}", userId, roomId);
     }
 
@@ -172,19 +180,19 @@ public class WebSocketServiceImpl implements WebSocketService {
         String displayName = userProfileRepository.findById(userId)
                 .map(UserProfile::getDisplayName)
                 .orElse("Unknown User");
-        
+
         // Create user left message
         ChatMessage leftMessage = new ChatMessage();
         leftMessage.setId(UUID.randomUUID());
         leftMessage.setMessageType(ChatMessage.MessageType.USER_LEFT);
         leftMessage.setContent(displayName + " left the chat");
-        
+
         // Send user left message to room
         messagingTemplate.convertAndSend(
                 "/topic/room/" + roomId,
                 leftMessage
         );
-        
+
         log.debug("Notified that user {} left room {}", userId, roomId);
     }
 }
