@@ -9,7 +9,7 @@ import java.util.Scanner;
 
 public class ChatGptClient {
     private static final String API_URL = "https://api.openai.com/v1/chat/completions";
-    private static final String API_KEY = "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";
+    private static final String API_KEY = System.getenv("OPENAI_API_KEY") != null ? System.getenv("OPENAI_API_KEY") : "";
     private static final String MODEL = "gpt-4o";
 
     public static void main(String[] args) {
@@ -21,12 +21,12 @@ public class ChatGptClient {
         while (true) {
             System.out.print("\nYou: ");
             String userInput = scanner.nextLine();
-            
+
             if ("exit".equalsIgnoreCase(userInput)) {
                 System.out.println("Goodbye!");
                 break;
             }
-            
+
             try {
                 String response = callChatGptApi(userInput);
                 System.out.println("\nChatGPT: " + response);
@@ -34,7 +34,7 @@ public class ChatGptClient {
                 System.out.println("Error calling ChatGPT API: " + e.getMessage());
             }
         }
-        
+
         scanner.close();
     }
 
@@ -67,7 +67,7 @@ public class ChatGptClient {
         String jsonResponse = response.toString();
         int contentStart = jsonResponse.indexOf("\"content\":\"") + 11;
         int contentEnd = jsonResponse.indexOf("\"", contentStart);
-        
+
         if (contentStart >= 11 && contentEnd > contentStart) {
             return jsonResponse.substring(contentStart, contentEnd)
                     .replace("\\n", "\n")

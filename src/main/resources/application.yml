@@ -108,7 +108,7 @@ twilio:
 # OpenAI API Configuration
 openai:
   api:
-    key: ${OPENAI_API_KEY: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}
+    key: ${OPENAI_API_KEY:}
     url: ${OPENAI_API_URL:https://api.openai.com/v1/chat/completions}
     model: ${OPENAI_API_MODEL:gpt-4o}
 
@@ -211,7 +211,7 @@ ai:
     api-key: ${AI_GOOGLE_API_KEY:}
     endpoint: ${AI_GOOGLE_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent}
   deepseek:
-    api-key: ${AI_DEEPSEEK_API_KEY:sk-1978921112d7461894588d63e574fb65}
+    api-key: ${AI_DEEPSEEK_API_KEY:}
     endpoint: ${AI_DEEPSEEK_ENDPOINT:https://api.deepseek.com/v1/chat/completions}
 
 # Firebase Configuration

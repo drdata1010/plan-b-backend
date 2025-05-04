@@ -24,13 +24,13 @@ public class ChatGptService {
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
-    
-    @Value("${openai.api.key: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}")
+
+    @Value("${openai.api.key:}")
     private String apiKey;
-    
+
     @Value("${openai.api.url:https://api.openai.com/v1/chat/completions}")
     private String apiUrl;
-    
+
     @Value("${openai.api.model:gpt-4o}")
     private String model;
 
@@ -63,10 +63,10 @@ public class ChatGptService {
             HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
 
             ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, requestEntity, String.class);
-            
+
             JsonNode rootNode = objectMapper.readTree(response.getBody());
             String content = rootNode.path("choices").path(0).path("message").path("content").asText();
-            
+
             return content;
         } catch (Exception e) {
             log.error("Error calling ChatGPT API", e);

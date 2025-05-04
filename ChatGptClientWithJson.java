@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 public class ChatGptClientWithJson {
     private static final String API_URL = "https://api.openai.com/v1/chat/completions";
-    private static final String API_KEY = "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";
+    private static final String API_KEY = System.getenv("OPENAI_API_KEY") != null ? System.getenv("OPENAI_API_KEY") : "";
     private static final String MODEL = "gpt-4o";
 
     public static void main(String[] args) {
@@ -23,12 +23,12 @@ public class ChatGptClientWithJson {
         while (true) {
             System.out.print("\nYou: ");
             String userInput = scanner.nextLine();
-            
+
             if ("exit".equalsIgnoreCase(userInput)) {
                 System.out.println("Goodbye!");
                 break;
             }
-            
+
             try {
                 String response = callChatGptApi(userInput);
                 System.out.println("\nChatGPT: " + response);
@@ -36,7 +36,7 @@ public class ChatGptClientWithJson {
                 System.out.println("Error calling ChatGPT API: " + e.getMessage());
             }
         }
-        
+
         scanner.close();
     }
 
@@ -69,7 +69,7 @@ public class ChatGptClientWithJson {
         String jsonResponse = response.toString();
         Pattern pattern = Pattern.compile("\"content\":\"(.*?)\"(?:,|\\})");
         Matcher matcher = pattern.matcher(jsonResponse);
-        
+
         if (matcher.find()) {
             return matcher.group(1)
                     .replace("\\n", "\n")
